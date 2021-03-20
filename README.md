@@ -24,7 +24,7 @@ interface {
   update(width: u32, height: u32, limit: u32): [u16]
 }`;
 
-const context = new widl.ast.Context({});
+const context = new ast.Context({});
 
 const doc = widl.parse(schema, { noLocation: true });
 const writer = new ast.Writer();
