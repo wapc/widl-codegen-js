@@ -1,0 +1,13 @@
+name: assemblyscript
+description: Basic AssemblyScript waPC project
+variables:
+- name: description
+  description: The project description
+  prompt: Please enter the project description
+- name: version
+  description: The project version
+  prompt: Please enter the version
+  default: 0.0.1
+- name: module
+  description: The module name
+  prompt: Please enter the module name

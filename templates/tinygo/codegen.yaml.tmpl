@@ -1,0 +1,14 @@
+schema: schema.widl
+generates:
+  pkg/module/module.go:
+    module: '@wapc/widl-codegen/tinygo'
+    visitorClass: ModuleVisitor
+    config:
+      package: module
+  pkg/main.go:
+    ifNotExists: true
+    module: '@wapc/widl-codegen/tinygo'
+    visitorClass: ScaffoldVisitor
+    config:
+      import: {{.module}}/pkg/module
+      package: module

@@ -1,6 +1,6 @@
 {
   "name": "@wapc/widl-codegen",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Flexible code generation using WIDL",
   "keywords": [
     "webassembly",
@@ -32,6 +32,7 @@
     "./utils": "./dist/cjs/rust/utils.js"
   },
   "files": [
+    "templates",
     "dist",
     "README.md",
     "test",
