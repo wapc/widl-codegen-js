@@ -1,0 +1,11 @@
+schema: schema.widl
+generates:
+  assembly/module.ts:
+    module: '@wapc/widl-codegen/assemblyscript'
+    visitorClass: ModuleVisitor
+  assembly/index.ts:
+    ifNotExists: true
+    module: '@wapc/widl-codegen/assemblyscript'
+    visitorClass: ScaffoldVisitor
+    config:
+      package: './module'
