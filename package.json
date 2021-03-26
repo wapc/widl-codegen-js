@@ -14,7 +14,13 @@
     "url": "https://www.github.com/wapc/widl-codegen-js"
   },
   "author": "Phil Kedy",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
   "engines": {
     "node": ">=8.5"
   },
