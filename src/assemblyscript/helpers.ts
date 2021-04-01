@@ -313,11 +313,6 @@ export function write(
       }
       const namedNode = t as Named;
       if (encodeFuncs.has(namedNode.Name.value)) {
-        if (prevOptional && primitives.has(namedNode.Name.value)) {
-          return `${typeInst}.${encodeFuncs.get(
-            namedNode.Name.value
-          )}(${variable}.value);\n`;
-        }
         return `${typeInst}.${encodeFuncs.get(
           namedNode.Name.value
         )}(${variable});\n`;
