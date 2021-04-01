@@ -224,9 +224,9 @@ export function read(
       if (decodeFuncs.has(namedNode.Name.value)) {
         if (prevOptional) {
           if (primitives.has(namedNode.Name.value))
-            return `${prefix}new Value(decoder.${decodeFuncs.get(
+            return `${prefix}decoder.${decodeFuncs.get(
               namedNode.Name.value
-            )}());\n`;
+            )}();\n`;
         }
         return `${prefix}decoder.${decodeFuncs.get(namedNode.Name.value)}();\n`;
       }
@@ -412,13 +412,11 @@ export function write(
       code += "if (" + variable + " === null) {\n";
       code += typeInst + ".writeNil()\n";
       code += "} else {\n";
-      code +=
-        "const unboxed = " + variable + `${variable != "item" ? "!" : ""}\n`;
       code += write(
         typeInst,
         typeClass,
         typeMeth,
-        "unboxed",
+        variable,
         optionalNode.type,
         true,
         isReference
