@@ -5,6 +5,7 @@ import {
   isReference,
   strQuote,
   capitalize,
+  parameterName,
   fieldName,
   isVoid,
   isObject,
@@ -44,7 +45,7 @@ func New${className}(binding string) *${className} {
         this.write(`, `);
       }
       this.write(
-        `${arg.name.value} ${expandType(arg.type, undefined, false, false)}`
+        `${parameterName(arg.name.value)} ${expandType(arg.type, undefined, true, false)}`
       );
     });
     this.write(`) `);
@@ -72,12 +73,12 @@ func New${className}(binding string) *${className} {
         return ${defaultValWithComma}err
       }\n`);
       if (!retVoid) {
-        this.write(`payload, `);
+        this.write(`payload, err := `);
       } else {
-        this.write(`_, `);
+        this.write(`_, err = `);
       }
       this.write(
-        `err := wapc.HostCall(h.binding, ${strQuote(
+        `wapc.HostCall(h.binding, ${strQuote(
           context.namespace.name.value
         )}, ${strQuote(operation.name.value)}, inputBytes)\n`
       );
@@ -85,7 +86,7 @@ func New${className}(binding string) *${className} {
       this.write(`inputArgs := ${fieldName(operation.name.value)}Args{\n`);
       operation.arguments.map((arg) => {
         const argName = arg.name.value;
-        this.write(`  ${fieldName(argName)}: ${argName},\n`);
+        this.write(`  ${fieldName(argName)}: ${parameterName(argName)},\n`);
       });
       this.write(`}\n`);
       this.write(`inputBytes, err := msgpack.ToBytes(&inputArgs)
@@ -93,11 +94,11 @@ func New${className}(binding string) *${className} {
         return ${defaultValWithComma}err
       }\n`);
       if (!retVoid) {
-        this.write(`payload, `);
+        this.write(`payload, err := `);
       } else {
-        this.write(`_, `);
+        this.write(`_, err = `);
       }
-      this.write(`err := wapc.HostCall(
+      this.write(`wapc.HostCall(
       h.binding,
       ${strQuote(context.namespace.name.value)},
       ${strQuote(operation.name.value)},
