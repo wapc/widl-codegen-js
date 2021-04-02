@@ -55,10 +55,11 @@ export class ModuleVisitor extends ClassVisitor {
   }
 
   visitOperation(context: Context): void {
-    if (context.operation!.isUnary()) {
+    const operation = context.operation!
+    if (operation.arguments.length == 0 || operation.isUnary()) {
       return;
     }
-    const argObject = this.convertOperationToObject(context.operation!);
+    const argObject = this.convertOperationToObject(operation);
     const args = new ClassVisitor(this.writer);
     argObject.accept(context.clone({ object: argObject }), args);
     super.triggerOperation(context);

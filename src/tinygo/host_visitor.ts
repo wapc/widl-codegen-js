@@ -1,4 +1,4 @@
-import { Context, Writer, BaseVisitor } from "@wapc/widl/ast";
+import { Context, Writer, BaseVisitor, Optional } from "@wapc/widl/ast";
 import {
   expandType,
   read,
@@ -52,7 +52,7 @@ func New${className}(binding string) *${className} {
     const retVoid = isVoid(operation.type);
     if (!retVoid) {
       this.write(
-        `(${expandType(operation.type, undefined, false, false)}, error)`
+        `(${expandType(operation.type, undefined, true, false)}, error)`
       );
     } else {
       this.write(`error`);
@@ -65,7 +65,18 @@ func New${className}(binding string) *${className} {
       defaultVal = defaultValueForType(operation.type);
       defaultValWithComma = defaultVal + ", ";
     }
-    if (operation.isUnary()) {
+    if (operation.arguments.length == 0) {
+      if (!retVoid) {
+        this.write(`payload, err := `);
+      } else {
+        this.write(`_, err := `);
+      }
+      this.write(
+        `wapc.HostCall(h.binding, ${strQuote(
+          context.namespace.name.value
+        )}, ${strQuote(operation.name.value)}, []byte{})\n`
+      );
+    } else if (operation.isUnary()) {
       this.write(`inputBytes, err := msgpack.ToBytes(&${
         operation.unaryOp().name.value
       })
@@ -120,10 +131,20 @@ func New${className}(binding string) *${className} {
           )}(&decoder)\n`
         );
       } else {
+        var resultVar = "";
+        if (operation.type instanceof Optional) {
+          resultVar = "result";
+          this.write(`var result ${expandType(
+            operation.type,
+            undefined,
+            true,
+            isReference(operation.annotations)
+          )}\n`)
+        }
         this.write(
           `${read(
             true,
-            "ret",
+            resultVar,
             true,
             defaultVal,
             operation.type,
@@ -131,7 +152,9 @@ func New${className}(binding string) *${className} {
             isReference(operation.annotations)
           )}`
         );
-        this.write(`return ret, err\n`);
+        if (resultVar != "") {
+          this.write(`return ${resultVar}, err\n`);
+        }
       }
     } else {
       this.write(`return err\n`);

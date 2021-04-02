@@ -73,7 +73,7 @@ pub struct ${className} {
         `-> HandlerResult<${expandType(
           operation.type,
           undefined,
-          false,
+          true,
           false
         )}>`
       );
@@ -82,7 +82,16 @@ pub struct ${className} {
     }
     this.write(` {\n`);
 
-    if (operation.isUnary()) {
+    if (operation.arguments.length == 0) {
+      this.write(
+        `host_call(
+        &self.binding, 
+        ${strQuote(context.namespace.name.value)},
+        ${strQuote(operation.name.value)},
+        &vec![],
+        )\n`
+      );
+    } else if (operation.isUnary()) {
       this.write(
         `host_call(
         &self.binding, 
