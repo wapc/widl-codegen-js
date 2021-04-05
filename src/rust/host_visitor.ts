@@ -119,7 +119,7 @@ pub struct ${className} {
         let resp = deserialize::<${expandType(
           operation.type,
           undefined,
-          false,
+          true,
           isReference(operation.annotations)
         )}>(vec.as_ref()).unwrap();
         resp
