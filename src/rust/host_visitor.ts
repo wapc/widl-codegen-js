@@ -55,7 +55,7 @@ pub struct ${className} {
     }
     const operation = context.operation!;
     this.write(formatComment("  /// ", operation.description));
-    this.write(`\npub fn ${functionName(operation.name.value)}(&self`);
+    this.write(`pub fn ${functionName(operation.name.value)}(&self`);
     operation.arguments.map((arg, index) => {
       this.write(
         `, ${fieldName(arg.name.value)}: ${expandType(
@@ -117,11 +117,11 @@ pub struct ${className} {
     if (!retVoid) {
       this.write(`.map(|vec| {
         let resp = deserialize::<${expandType(
-          operation.type,
-          undefined,
-          true,
-          isReference(operation.annotations)
-        )}>(vec.as_ref()).unwrap();
+        operation.type,
+        undefined,
+        true,
+        isReference(operation.annotations)
+      )}>(vec.as_ref()).unwrap();
         resp
       })\n`);
     } else {
