@@ -20,14 +20,14 @@ export class WrapperVarsVisitor extends BaseVisitor {
     }
     if (context.config.handlerPreamble != true) {
       this.write(`#[cfg(feature = "guest")]
-lazy_static! {\n`);
+lazy_static::lazy_static! {\n`);
       context.config.handlerPreamble = true;
     }
     const operation = context.operation!;
     this.write(
       `static ref ${functionName(
         operation.name.value
-      ).toUpperCase()}: RwLock<Option<fn(`
+      ).toUpperCase()}: std::sync::RwLock<Option<fn(`
     );
     operation.arguments.forEach((arg, i) => {
       if (i > 0) {
@@ -50,7 +50,7 @@ lazy_static! {\n`);
     } else {
       this.write(`()`);
     }
-    this.write(`>>> = RwLock::new(None);\n`);
+    this.write(`>>> = std::sync::RwLock::new(None);\n`);
   }
 
   visitAllOperationsAfter(context: Context): void {
