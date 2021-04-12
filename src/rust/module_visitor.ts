@@ -72,12 +72,7 @@ use std::io::Cursor;
 #[cfg(feature = "guest")]
 extern crate wapc_guest as guest;
 #[cfg(feature = "guest")]
-use guest::prelude::*;
-
-#[cfg(feature = "guest")]
-use lazy_static::lazy_static;
-#[cfg(feature = "guest")]
-use std::sync::RwLock;\n\n`);
+use guest::prelude::*;\n\n`);
     super.triggerDocumentBefore(context);
   }
 
