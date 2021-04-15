@@ -99,7 +99,7 @@ fn ${functionName(
         `let result = lock(${varAccessArg("input", operation.arguments)})?;\n`
       );
     }
-    this.write(`Ok(serialize(result)?)\n`);
+    this.write(`serialize(result)\n`);
     this.write(`}\n\n`);
   }
 
