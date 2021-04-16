@@ -1,4 +1,4 @@
-import { Context, Writer, BaseVisitor } from "@wapc/widl/ast";
+import { Context, Writer, BaseVisitor, Optional } from "@wapc/widl/ast";
 import {
   expandType,
   read,
@@ -8,7 +8,7 @@ import {
   isVoid,
   isObject,
 } from "./helpers";
-import { formatComment, shouldIncludeHostCall } from "../utils";
+import { camelCase, formatComment, shouldIncludeHostCall } from "../utils";
 
 export class HostVisitor extends BaseVisitor {
   constructor(writer: Writer) {
@@ -34,19 +34,28 @@ export class HostVisitor extends BaseVisitor {
     this.write(`\n`);
     const operation = context.operation!;
     this.write(formatComment("  // ", operation.description));
-    this.write(`  ${operation.name.value}(`);
+    this.write(`  ${camelCase(operation.name.value)}(`);
     operation.arguments.map((arg, index) => {
       if (index > 0) {
         this.write(`, `);
       }
       this.write(`${arg.name.value}: ${expandType(arg.type, false, false)}`);
     });
-    this.write(`): ${expandType(operation.type, false, false)} {\n`);
+    this.write(`): ${expandType(operation.type, true, false)} {\n`);
 
     this.write(`  `);
     const retVoid = isVoid(operation.type);
 
-    if (operation.isUnary()) {
+    if (operation.arguments.length == 0) {
+      if (!retVoid) {
+        this.write(`const payload = `);
+      }
+      this.write(
+        `hostCall(this.binding, ${strQuote(
+          context.namespace.name.value
+        )}, ${strQuote(operation.name.value)}, new ArrayBuffer(0));\n`
+      );
+    } else if (operation.isUnary()) {
       if (!retVoid) {
         this.write(`const payload = `);
       }
@@ -86,15 +95,26 @@ export class HostVisitor extends BaseVisitor {
           )}.decode(decoder);\n`
         );
       } else {
+        var resultVar = "";
+        if (operation.type instanceof Optional) {
+          resultVar = "result";
+          this.write(`var result: ${expandType(
+            operation.type,
+            true,
+            isReference(operation.annotations)
+          )};\n`)
+        }
         this.write(
-          `    const ${read(
-            "ret",
+          `${read(
+            resultVar,
             operation.type,
             false,
             isReference(operation.annotations)
           )}`
         );
-        this.write(`    return ret;\n`);
+        if (resultVar != "") {
+          this.write(`  return ${resultVar};\n`);
+        }
       }
     }
     this.write(`  }\n`);

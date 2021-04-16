@@ -10,4 +10,9 @@ variables:
   default: 0.0.1
 - name: module
   description: The module name
-  prompt: Please enter the module name
+  prompt: Please enter the module name (e.g. github.com/myorg/mymodule)
+  default: github.com/myorg/mymodule
+- name: package
+  description: The module's package name name
+  prompt: Please enter the module's package name (e.g. mymodule)
+  default: mymodule

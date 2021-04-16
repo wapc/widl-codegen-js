@@ -190,9 +190,7 @@ export const expandType = (
     case type instanceof Optional:
       let expanded = expandType((type as Optional).type, true, isReference);
       if (useOptional) {
-        return primitives.has(expanded)
-          ? `Value<${expanded}> | null`
-          : `${expanded} | null`;
+        return `${expanded} | null`;
       }
       return expanded;
     default:
@@ -226,9 +224,9 @@ export function read(
       if (decodeFuncs.has(namedNode.Name.value)) {
         if (prevOptional) {
           if (primitives.has(namedNode.Name.value))
-            return `${prefix}new Value(decoder.${decodeFuncs.get(
+            return `${prefix}decoder.${decodeFuncs.get(
               namedNode.Name.value
-            )}());\n`;
+            )}();\n`;
         }
         return `${prefix}decoder.${decodeFuncs.get(namedNode.Name.value)}();\n`;
       }
@@ -315,11 +313,6 @@ export function write(
       }
       const namedNode = t as Named;
       if (encodeFuncs.has(namedNode.Name.value)) {
-        if (prevOptional && primitives.has(namedNode.Name.value)) {
-          return `${typeInst}.${encodeFuncs.get(
-            namedNode.Name.value
-          )}(${variable}.value);\n`;
-        }
         return `${typeInst}.${encodeFuncs.get(
           namedNode.Name.value
         )}(${variable});\n`;
@@ -414,13 +407,11 @@ export function write(
       code += "if (" + variable + " === null) {\n";
       code += typeInst + ".writeNil()\n";
       code += "} else {\n";
-      code +=
-        "const unboxed = " + variable + `${variable != "item" ? "!" : ""}\n`;
       code += write(
         typeInst,
         typeClass,
         typeMeth,
-        "unboxed",
+        variable,
         optionalNode.type,
         true,
         isReference

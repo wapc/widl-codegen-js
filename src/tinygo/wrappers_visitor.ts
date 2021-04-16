@@ -68,8 +68,10 @@ export class WrapperFuncsVisitor extends BaseVisitor {
     const operation = context.operation!;
     this.write(`func ${uncapitalize(
       operation.name.value
-    )}Wrapper(payload []byte) ([]byte, error) {
-      decoder := msgpack.NewDecoder(payload)\n`);
+    )}Wrapper(payload []byte) ([]byte, error) {\n`);
+    if (operation.arguments.length > 0) {
+      this.write(`decoder := msgpack.NewDecoder(payload)\n`);
+    }
     if (operation.isUnary()) {
       this.write(`var request ${expandType(
         operation.unaryOp().type,
@@ -81,8 +83,10 @@ export class WrapperFuncsVisitor extends BaseVisitor {
       this.write(isVoid(operation.type) ? "err := " : "response, err := ");
       this.write(`${uncapitalize(operation.name.value)}Handler(request)\n`);
     } else {
-      this.write(`var inputArgs ${capitalize(operation.name.value)}Args
-      inputArgs.Decode(&decoder)\n`);
+      if (operation.arguments.length > 0) {
+        this.write(`var inputArgs ${capitalize(operation.name.value)}Args
+        inputArgs.Decode(&decoder)\n`);
+      }
       this.write(isVoid(operation.type) ? "err := " : "response, err := ");
       this.write(
         `${uncapitalize(operation.name.value)}Handler(${varAccessArg(

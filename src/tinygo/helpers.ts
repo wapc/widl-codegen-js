@@ -11,6 +11,7 @@ import {
   InputValueDefinition,
   ObjectDefinition,
 } from "@wapc/widl/ast";
+import { camelCase, pascalCase } from "../utils";
 import { translations, primitives, decodeFuncs, encodeFuncs } from "./constant";
 
 /**
@@ -626,8 +627,16 @@ export function uncapitalize(str: string): string {
   return str[0].toLowerCase() + str.slice(1);
 }
 
+export function parameterName(str: string): string {
+  str = camelCase(str);
+  if (str.endsWith("Id")) {
+    str = str.substring(0, str.length - 2) + "ID";
+  }
+  return str;
+}
+
 export function fieldName(str: string): string {
-  str = capitalize(str);
+  str = pascalCase(str);
   if (str.endsWith("Id")) {
     str = str.substring(0, str.length - 2) + "ID";
   }
@@ -670,7 +679,7 @@ export function mapArg(
   arg: InputValueDefinition,
   packageName?: string
 ): string {
-  return `${arg.name.value} ${expandType(
+  return `${parameterName(arg.name.value)} ${expandType(
     arg.type,
     packageName,
     true,

@@ -55,7 +55,7 @@ pub struct ${className} {
     }
     const operation = context.operation!;
     this.write(formatComment("  /// ", operation.description));
-    this.write(`\npub fn ${functionName(operation.name.value)}(&self`);
+    this.write(`pub fn ${functionName(operation.name.value)}(&self`);
     operation.arguments.map((arg, index) => {
       this.write(
         `, ${fieldName(arg.name.value)}: ${expandType(
@@ -73,7 +73,7 @@ pub struct ${className} {
         `-> HandlerResult<${expandType(
           operation.type,
           undefined,
-          false,
+          true,
           false
         )}>`
       );
@@ -82,7 +82,16 @@ pub struct ${className} {
     }
     this.write(` {\n`);
 
-    if (operation.isUnary()) {
+    if (operation.arguments.length == 0) {
+      this.write(
+        `host_call(
+        &self.binding, 
+        ${strQuote(context.namespace.name.value)},
+        ${strQuote(operation.name.value)},
+        &vec![],
+        )\n`
+      );
+    } else if (operation.isUnary()) {
       this.write(
         `host_call(
         &self.binding, 
@@ -108,11 +117,11 @@ pub struct ${className} {
     if (!retVoid) {
       this.write(`.map(|vec| {
         let resp = deserialize::<${expandType(
-          operation.type,
-          undefined,
-          false,
-          isReference(operation.annotations)
-        )}>(vec.as_ref()).unwrap();
+        operation.type,
+        undefined,
+        true,
+        isReference(operation.annotations)
+      )}>(vec.as_ref()).unwrap();
         resp
       })\n`);
     } else {

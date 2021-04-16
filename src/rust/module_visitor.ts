@@ -48,10 +48,11 @@ export class ModuleVisitor extends BaseVisitor {
       "OperationAfter",
       "arguments",
       (context: Context): void => {
-        if (context.operation!.isUnary()) {
+        const operation = context.operation!
+        if (operation.arguments.length == 0 || operation.isUnary()) {
           return;
         }
-        const argObject = this.convertOperationToObject(context.operation!);
+        const argObject = this.convertOperationToObject(operation);
         const struct = new StructVisitor(this.writer);
         argObject.accept(context.clone({ object: argObject }), struct);
       }
@@ -71,12 +72,7 @@ use std::io::Cursor;
 #[cfg(feature = "guest")]
 extern crate wapc_guest as guest;
 #[cfg(feature = "guest")]
-use guest::prelude::*;
-
-#[cfg(feature = "guest")]
-use lazy_static::lazy_static;
-#[cfg(feature = "guest")]
-use std::sync::RwLock;\n\n`);
+use guest::prelude::*;\n\n`);
     super.triggerDocumentBefore(context);
   }
 
