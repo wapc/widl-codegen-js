@@ -30,10 +30,10 @@ export function formatComment(
     return "";
   }
   let textValue = "";
-  if (text instanceof StringValue) {
-    textValue = text.value;
-  } else {
+  if (!text || typeof text === "string") {
     textValue = text;
+  } else {
+    textValue = text.value;
   }
 
   // Replace single newline characters with space so that the logic below
