@@ -68,7 +68,7 @@ export class HostVisitor extends BaseVisitor {
     }
     if (operation.isUnary()) {
       this.write(`inputPayload, err := msgpack.Marshal(${
-        operation.arguments[0].type instanceof Optional ? "" : "&"
+        operation.arguments[0].type.isKind(Optional) ? "" : "&"
       }${operation.arguments[0].name.value})
       if err != nil {
         return ret, err

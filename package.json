@@ -53,6 +53,7 @@
     "build:cjs": "tsc --declaration --declarationMap --declarationDir dist/types ",
     "build:umd": "rollup --config config/rollup.config.js",
     "build:umd:min": "cd dist && uglifyjs --compress --mangle --source-map --comments --output standalone.min.js -- standalone.js",
+    "watch": "tsc -w",
     "clean": "shx rm -rf dist",
     "docs": "typedoc --theme minimal --exclude \"**/src/**/__tests__/*.*\" --out docs src/",
     "test": "jest -c ./config/jest.config.js --passWithNoTests",
@@ -72,7 +73,7 @@
     "release:preflight": "npm pack --dry-run"
   },
   "dependencies": {
-    "@wapc/widl": "0.0.3"
+    "@wapc/widl": "0.0.4"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.1.0",

@@ -47,7 +47,7 @@ export function defValue(fieldDef: FieldDefinition): string {
   const type = fieldDef.type;
   if (fieldDef.default) {
     let returnVal = fieldDef.default.getValue();
-    if (fieldDef.type instanceof Named) {
+    if (fieldDef.type.isKind(Named)) {
       returnVal =
         (fieldDef.type as Named).Name.value == "string"
           ? strQuote(returnVal)
@@ -157,7 +157,7 @@ export const expandType = (
   isReference: boolean
 ): string => {
   switch (true) {
-    case type instanceof Named:
+    case type.isKind(Named):
       if (isReference) {
         return "String";
       }
@@ -170,7 +170,7 @@ export const expandType = (
         return packageName + "." + namedValue;
       }
       return namedValue;
-    case type instanceof Map:
+    case type.isKind(Map):
       return `std::collections::HashMap<${expandType(
         (type as Map).keyType,
         packageName,
@@ -182,14 +182,14 @@ export const expandType = (
         true,
         isReference
       )}>`;
-    case type instanceof List:
+    case type.isKind(List):
       return `Vec<${expandType(
         (type as List).type,
         packageName,
         true,
         isReference
       )}>`;
-    case type instanceof Optional:
+    case type.isKind(Optional):
       const nestedType = (type as Optional).type;
       let expanded = expandType(nestedType, packageName, true, isReference);
       if (useOptional) {
@@ -206,7 +206,7 @@ export const expandType = (
  * @param t Node that is a Type node
  */
 export function isVoid(t: Type): boolean {
-  if (t instanceof Named) {
+  if (t.isKind(Named)) {
     return (t as Named).Name.value == "void";
   }
   return false;
@@ -217,7 +217,7 @@ export function isVoid(t: Type): boolean {
  * @param t Node that is a Type node
  */
 export function isObject(t: Type): boolean {
-  if (t instanceof Named) {
+  if (t.isKind(Named)) {
     return !primitives.has((t as Named).Name.value);
   }
   return false;

@@ -95,7 +95,7 @@ export function defValue(fieldDef: FieldDefinition): string {
   const type = fieldDef.type;
   if (fieldDef.default) {
     let returnVal = fieldDef.default.getValue();
-    if (fieldDef.type instanceof Named) {
+    if (fieldDef.type.isKind(Named)) {
       returnVal =
         (fieldDef.type as Named).Name.value == "string"
           ? strQuote(returnVal)
@@ -206,7 +206,7 @@ export const expandType = (
   isReference: boolean
 ): string => {
   switch (true) {
-    case type instanceof Named:
+    case type.isKind(Named):
       if (isReference) {
         return "string";
       }
@@ -219,7 +219,7 @@ export const expandType = (
         return packageName + "." + namedValue;
       }
       return namedValue;
-    case type instanceof Map:
+    case type.isKind(Map):
       return `map[${expandType(
         (type as Map).keyType,
         packageName,
@@ -231,21 +231,21 @@ export const expandType = (
         true,
         isReference
       )}`;
-    case type instanceof List:
+    case type.isKind(List):
       return `[]${expandType(
         (type as List).type,
         packageName,
         true,
         isReference
       )}`;
-    case type instanceof Optional:
+    case type.isKind(Optional):
       const nestedType = (type as Optional).type;
       let expanded = expandType(nestedType, packageName, true, isReference);
       if (
         useOptional &&
         !(
-          nestedType instanceof Map ||
-          nestedType instanceof List ||
+          nestedType.isKind(Map) ||
+          nestedType.isKind(List) ||
           expanded == "[]byte"
         )
       ) {
@@ -296,7 +296,7 @@ export function read(
     }
   }
   switch (true) {
-    case t instanceof Named:
+    case t.isKind(Named):
       let namedNode = t as Named;
       const amp = typeInstRef ? "&" : "";
       let decodeFn = `Decode${namedNode.Name.value}(${amp}decoder)`;
@@ -310,7 +310,7 @@ export function read(
         ${prefix}${namedNode.Name.value == "bytes" ? "" : "&"}nonNil\n`;
       }
       return `${prefix}${decodeFn}\n`;
-    case t instanceof Map:
+    case t.isKind(Map):
       let mapCode = `mapSize, err := decoder.ReadMapSize()
       if err != nil {
         return ${returnPrefix}err
@@ -366,7 +366,7 @@ export function read(
       mapCode += `${variable}[key] = value
       }\n`;
       return mapCode;
-    case t instanceof List:
+    case t.isKind(List):
       let listCode = `listSize, err := decoder.ReadArraySize()
       if err != nil {
         return ${returnPrefix}err
@@ -385,7 +385,7 @@ export function read(
       listCode += `for listSize > 0 {
         listSize--
         var nonNilItem ${
-          (t as List).type instanceof Optional ? "*" : ""
+          (t as List).type.isKind(Optional) ? "*" : ""
         }${expandType((t as List).type, undefined, false, isReference)}\n`;
       listCode += read(
         typeInstRef,
@@ -405,12 +405,12 @@ export function read(
       listCode += `${variable} = append(${variable}, nonNilItem)
       }\n`;
       return listCode;
-    case t instanceof Optional:
+    case t.isKind(Optional):
       const optNode = t as Optional;
       optNode.type;
       switch (true) {
-        case optNode.type instanceof List:
-        case optNode.type instanceof Map:
+        case optNode.type.isKind(List):
+        case optNode.type.isKind(Map):
           return (
             prefix +
             read(
@@ -475,7 +475,7 @@ export function write(
 ): string {
   let code = "";
   switch (true) {
-    case t instanceof Named:
+    case t.isKind(Named):
       if (isReference) {
         return `${typeInst}.WriteString(${variable})`;
       }
@@ -487,7 +487,7 @@ export function write(
       }
       const amp = typeInstRef ? "&" : "";
       return `${variable}.${typeMeth}(${amp}${typeInst})\n`;
-    case t instanceof Map:
+    case t.isKind(Map):
       const mappedNode = t as Map;
       code +=
         typeInst +
@@ -515,7 +515,7 @@ export function write(
         )}}
       }\n`;
       return code;
-    case t instanceof List:
+    case t.isKind(List):
       const listNode = t as List;
       code +=
         typeInst +
@@ -532,11 +532,11 @@ export function write(
           isReference
         )}}\n`;
       return code;
-    case t instanceof Optional:
+    case t.isKind(Optional):
       const optionalNode = t as Optional;
       switch (true) {
-        case (t as Optional).type instanceof List:
-        case (t as Optional).type instanceof Map:
+        case (t as Optional).type.isKind(List):
+        case (t as Optional).type.isKind(Map):
           return write(
             typeInst,
             typeInstRef,
@@ -577,7 +577,7 @@ export function write(
  * @param t Node that is a Type node
  */
 export function isVoid(t: Type): boolean {
-  if (t instanceof Named) {
+  if (t.isKind(Named)) {
     return (t as Named).Name.value == "void";
   }
   return false;
@@ -588,7 +588,7 @@ export function isVoid(t: Type): boolean {
  * @param t Node that is a Type node
  */
 export function isObject(t: Type): boolean {
-  if (t instanceof Named) {
+  if (t.isKind(Named)) {
     return !primitives.has((t as Named).Name.value);
   }
   return false;
