@@ -1,15 +1,16 @@
 import {
   Named,
-  Map,
-  List,
+  MapType,
+  ListType,
   Optional,
   FieldDefinition,
   Type,
   Annotation,
   ValuedDefinition,
   OperationDefinition,
-  InputValueDefinition,
-  ObjectDefinition,
+  ParameterDefinition,
+  TypeDefinition,
+  Kind,
 } from "@wapc/widl/ast";
 import { translations, primitives, decodeFuncs, encodeFuncs } from "./constant";
 
@@ -70,9 +71,9 @@ export function defValue(fieldDef: FieldDefinition): string {
   const type = fieldDef.type;
   if (fieldDef.default) {
     let returnVal = fieldDef.default.getValue();
-    if (fieldDef.type.isKind(Named)) {
+    if (fieldDef.type.isKind(Kind.Named)) {
       returnVal =
-        (fieldDef.type as Named).Name.value == "string"
+        (fieldDef.type as Named).name.value == "string"
           ? strQuote(returnVal)
           : returnVal;
     }
@@ -82,8 +83,8 @@ export function defValue(fieldDef: FieldDefinition): string {
   switch (type.constructor) {
     case Optional:
       return "nil";
-    case List:
-    case Map:
+    case ListType:
+    case MapType:
       return `new ${expandType(
         type,
         undefined,
@@ -91,7 +92,7 @@ export function defValue(fieldDef: FieldDefinition): string {
         isReference(fieldDef.annotations)
       )}()`;
     case Named:
-      switch ((type as Named).Name.value) {
+      switch ((type as Named).name.value) {
         case "ID":
         case "string":
           return '""';
@@ -126,11 +127,11 @@ export function defaultValueForType(type: Type, packageName?: string): string {
   switch (type.constructor) {
     case Optional:
       return "nil";
-    case List:
-    case Map:
+    case ListType:
+    case MapType:
       return `${expandType(type, packageName, false, false)}{}`;
     case Named:
-      switch ((type as Named).Name.value) {
+      switch ((type as Named).name.value) {
         case "ID":
         case "string":
           return '""';
@@ -154,7 +155,7 @@ export function defaultValueForType(type: Type, packageName?: string): string {
             packageName != undefined && packageName != ""
               ? packageName + "."
               : "";
-          return `${prefix}${capitalize((type as Named).Name.value)}{}`; // reference to something else
+          return `${prefix}${capitalize((type as Named).name.value)}{}`; // reference to something else
       }
   }
   return "???";
@@ -181,11 +182,11 @@ export const expandType = (
   isReference: boolean
 ): string => {
   switch (true) {
-    case type.isKind(Named):
+    case type.isKind(Kind.Named):
       if (isReference) {
         return "string";
       }
-      var namedValue = (type as Named).Name.value;
+      var namedValue = (type as Named).name.value;
       const translation = translations.get(namedValue);
       if (translation != undefined) {
         return (namedValue = translation!);
@@ -194,33 +195,33 @@ export const expandType = (
         return packageName + "." + namedValue;
       }
       return namedValue;
-    case type.isKind(Map):
+    case type.isKind(Kind.MapType):
       return `map[${expandType(
-        (type as Map).keyType,
+        (type as MapType).keyType,
         packageName,
         true,
         isReference
       )}]${expandType(
-        (type as Map).valueType,
+        (type as MapType).valueType,
         packageName,
         true,
         isReference
       )}`;
-    case type.isKind(List):
+    case type.isKind(Kind.ListType):
       return `[]${expandType(
-        (type as List).type,
+        (type as ListType).type,
         packageName,
         true,
         isReference
       )}`;
-    case type.isKind(Optional):
+    case type.isKind(Kind.Optional):
       const nestedType = (type as Optional).type;
       let expanded = expandType(nestedType, packageName, true, isReference);
       if (
         useOptional &&
         !(
-          nestedType.isKind(Map) ||
-          nestedType.isKind(List) ||
+          nestedType.isKind(Kind.MapType) ||
+          nestedType.isKind(Kind.ListType) ||
           expanded == "[]byte"
         )
       ) {
@@ -265,20 +266,20 @@ export function read(
     }
   }
   switch (true) {
-    case t.isKind(Named):
+    case t.isKind(Kind.Named):
       let namedNode = t as Named;
-      let decodeFn = `Decode${namedNode.Name.value}(decoder)`;
+      let decodeFn = `Decode${namedNode.name.value}(decoder)`;
       if (isReference) {
         decodeFn = `decoder.ReadString()`;
-      } else if (decodeFuncs.has(namedNode.Name.value)) {
-        decodeFn = `decoder.${decodeFuncs.get(namedNode.Name.value)}()`;
+      } else if (decodeFuncs.has(namedNode.name.value)) {
+        decodeFn = `decoder.${decodeFuncs.get(namedNode.name.value)}()`;
       }
       if (prevOptional) {
         return `nonNil, err = ${decodeFn}
-        ${prefix}${namedNode.Name.value == "bytes" ? "" : "&"}nonNil\n`;
+        ${prefix}${namedNode.name.value == "bytes" ? "" : "&"}nonNil\n`;
       }
       return `${prefix}${decodeFn}\n`;
-    case t.isKind(Map):
+    case t.isKind(Kind.MapType):
       let mapCode = `mapSize, err := decoder.ReadMapSize()
       if err != nil {
         return ${returnPrefix}err
@@ -289,12 +290,12 @@ export function read(
         mapCode += `${variable} = `;
       }
       mapCode += `make(map[${expandType(
-        (t as Map).keyType,
+        (t as MapType).keyType,
         undefined,
         true,
         isReference
       )}]${expandType(
-        (t as Map).valueType,
+        (t as MapType).valueType,
         undefined,
         true,
         isReference
@@ -305,7 +306,7 @@ export function read(
         "key",
         true,
         defaultVal,
-        (t as Map).keyType,
+        (t as MapType).keyType,
         false,
         isReference
       );
@@ -319,7 +320,7 @@ export function read(
         "value",
         true,
         defaultVal,
-        (t as Map).valueType,
+        (t as MapType).valueType,
         false,
         isReference
       );
@@ -332,7 +333,7 @@ export function read(
       mapCode += `${variable}[key] = value
       }\n`;
       return mapCode;
-    case t.isKind(List):
+    case t.isKind(Kind.ListType):
       let listCode = `listSize, err := decoder.ReadArraySize()
       if err != nil {
         return ${returnPrefix}err
@@ -343,7 +344,7 @@ export function read(
         listCode += `${variable} = `;
       }
       listCode += `make([]${expandType(
-        (t as List).type,
+        (t as ListType).type,
         undefined,
         true,
         isReference
@@ -351,13 +352,13 @@ export function read(
       listCode += `for listSize > 0 {
         listSize--
         var nonNilItem ${
-          (t as List).type.isKind(Optional) ? "*" : ""
-        }${expandType((t as List).type, undefined, false, isReference)}\n`;
+          (t as ListType).type.isKind(Kind.Optional) ? "*" : ""
+        }${expandType((t as ListType).type, undefined, false, isReference)}\n`;
       listCode += read(
         "nonNilItem",
         true,
         defaultVal,
-        (t as List).type,
+        (t as ListType).type,
         false,
         isReference
       );
@@ -370,12 +371,12 @@ export function read(
       listCode += `${variable} = append(${variable}, nonNilItem)
       }\n`;
       return listCode;
-    case t.isKind(Optional):
+    case t.isKind(Kind.Optional):
       const optNode = t as Optional;
       optNode.type;
       switch (true) {
-        case optNode.type.isKind(List):
-        case optNode.type.isKind(Map):
+        case optNode.type.isKind(Kind.ListType):
+        case optNode.type.isKind(Kind.MapType):
           return (
             prefix +
             read(variable, false, defaultVal, optNode.type, true, isReference)
@@ -430,19 +431,19 @@ export function write(
 ): string {
   let code = "";
   switch (true) {
-    case t.isKind(Named):
+    case t.isKind(Kind.Named):
       if (isReference) {
         return `${typeInst}.WriteString(${variable})`;
       }
       const namedNode = t as Named;
-      if (encodeFuncs.has(namedNode.Name.value)) {
+      if (encodeFuncs.has(namedNode.name.value)) {
         return `${typeInst}.${encodeFuncs.get(
-          namedNode.Name.value
+          namedNode.name.value
         )}(${variable})\n`;
       }
       return `${variable}.${typeMeth}(${typeInst})\n`;
-    case t.isKind(Map):
-      const mappedNode = t as Map;
+    case t.isKind(Kind.MapType):
+      const mappedNode = t as MapType;
       code +=
         typeInst +
         `.WriteMapSize(uint32(len(${variable})))
@@ -465,8 +466,8 @@ export function write(
           isReference
         )}}\n`;
       return code;
-    case t.isKind(List):
-      const listNode = t as List;
+    case t.isKind(Kind.ListType):
+      const listNode = t as ListType;
       code +=
         typeInst +
         `.WriteArraySize(uint32(len(${variable})))
@@ -481,11 +482,11 @@ export function write(
           isReference
         )}}\n`;
       return code;
-    case t.isKind(Optional):
+    case t.isKind(Kind.Optional):
       const optionalNode = t as Optional;
       switch (true) {
-        case (t as Optional).type.isKind(List):
-        case (t as Optional).type.isKind(Map):
+        case (t as Optional).type.isKind(Kind.ListType):
+        case (t as Optional).type.isKind(Kind.MapType):
           return write(
             typeInst,
             typeClass,
@@ -524,8 +525,8 @@ export function write(
  * @param t Node that is a Type node
  */
 export function isVoid(t: Type): boolean {
-  if (t.isKind(Named)) {
-    return (t as Named).Name.value == "void";
+  if (t.isKind(Kind.Named)) {
+    return (t as Named).name.value == "void";
   }
   return false;
 }
@@ -535,8 +536,8 @@ export function isVoid(t: Type): boolean {
  * @param t Node that is a Type node
  */
 export function isObject(t: Type): boolean {
-  if (t.isKind(Named)) {
-    return !primitives.has((t as Named).Name.value);
+  if (t.isKind(Kind.Named)) {
+    return !primitives.has((t as Named).name.value);
   }
   return false;
 }
@@ -583,7 +584,7 @@ export function fieldName(str: string): string {
 export function opsAsFns(ops: OperationDefinition[]): string {
   return ops
     .map((op) => {
-      return `func ${op.name.value}(${mapArgs(op.arguments)}) ${expandType(
+      return `func ${op.name.value}(${mapArgs(op.parameters)}) ${expandType(
         op.type,
         undefined,
         true,
@@ -598,7 +599,7 @@ export function opsAsFns(ops: OperationDefinition[]): string {
  * @param args InputValueDefintion array which is an array of the arguments
  */
 export function mapArgs(
-  args: InputValueDefinition[],
+  args: ParameterDefinition[],
   packageName?: string
 ): string {
   return args
@@ -608,10 +609,7 @@ export function mapArgs(
     .join(", ");
 }
 
-export function mapArg(
-  arg: InputValueDefinition,
-  packageName?: string
-): string {
+export function mapArg(arg: ParameterDefinition, packageName?: string): string {
   return `${arg.name.value} ${expandType(
     arg.type,
     packageName,
@@ -624,7 +622,7 @@ export function mapArg(
  * returns if a widl type is a node
  * @param o ObjectDefintion which correlates to a widl Type
  */
-export function isNode(o: ObjectDefinition): boolean {
+export function isNode(o: TypeDefinition): boolean {
   for (const field of o.fields) {
     if (field.name.value.toLowerCase() == "id") {
       return true;
@@ -635,7 +633,7 @@ export function isNode(o: ObjectDefinition): boolean {
 
 export function varAccessArg(
   variable: string,
-  args: InputValueDefinition[]
+  args: ParameterDefinition[]
 ): string {
   return args
     .map((arg) => {

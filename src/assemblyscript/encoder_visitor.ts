@@ -6,15 +6,15 @@ export class EncoderVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectFieldsBefore(context: Context): void {
-    super.triggerObjectFieldsBefore(context);
+  visitTypeFieldsBefore(context: Context): void {
+    super.triggerTypeFieldsBefore(context);
     this.write(
       `  encode(encoder: Writer): void {
     encoder.writeMapSize(${context.fields!.length});\n`
     );
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     this.write(`encoder.writeString(${strQuote(field.name.value)});\n`);
     this.write(
@@ -24,11 +24,11 @@ export class EncoderVisitor extends BaseVisitor {
         isReference(field.annotations)
       )
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectFieldsAfter(context: Context): void {
+  visitTypeFieldsAfter(context: Context): void {
     this.write(`  }\n`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 }

@@ -29,7 +29,7 @@ export class WrapperVarsVisitor extends BaseVisitor {
     const operation = context.operation!;
     this.write(
       `\t${uncapitalize(operation.name.value)}Handler func (${mapArgs(
-        operation.arguments
+        operation.parameters
       )}) `
     );
     if (!isVoid(operation.type)) {
@@ -66,10 +66,12 @@ export class WrapperFuncsVisitor extends BaseVisitor {
       return;
     }
     const operation = context.operation!;
-    this.write(`func ${uncapitalize(
-      operation.name.value
-    )}Wrapper(payload []byte) ([]byte, error) {\n`);
-    if (operation.arguments.length > 0) {
+    this.write(
+      `func ${uncapitalize(
+        operation.name.value
+      )}Wrapper(payload []byte) ([]byte, error) {\n`
+    );
+    if (operation.parameters.length > 0) {
       this.write(`decoder := msgpack.NewDecoder(payload)\n`);
     }
     if (operation.isUnary()) {
@@ -83,7 +85,7 @@ export class WrapperFuncsVisitor extends BaseVisitor {
       this.write(isVoid(operation.type) ? "err := " : "response, err := ");
       this.write(`${uncapitalize(operation.name.value)}Handler(request)\n`);
     } else {
-      if (operation.arguments.length > 0) {
+      if (operation.parameters.length > 0) {
         this.write(`var inputArgs ${capitalize(operation.name.value)}Args
         inputArgs.Decode(&decoder)\n`);
       }
@@ -91,7 +93,7 @@ export class WrapperFuncsVisitor extends BaseVisitor {
       this.write(
         `${uncapitalize(operation.name.value)}Handler(${varAccessArg(
           "inputArgs",
-          operation.arguments
+          operation.parameters
         )})\n`
       );
     }

@@ -33,7 +33,7 @@ export class HandlersVisitor extends BaseVisitor {
     if (operation.isUnary()) {
       opVal += mapArg(operation.unaryOp());
     } else {
-      opVal += mapArgs(operation.arguments);
+      opVal += mapArgs(operation.parameters);
     }
     opVal += `) => ${expandType(
       operation.type,

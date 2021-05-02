@@ -35,7 +35,7 @@
     "./go": "./dist/cjs/go/index.js",
     "./rust": "./dist/cjs/rust/index.js",
     "./tinygo": "./dist/cjs/tinygo/index.js",
-    "./utils": "./dist/cjs/rust/utils.js"
+    "./utils": "./dist/cjs/utils/index.js"
   },
   "files": [
     "templates",
@@ -62,7 +62,7 @@
     "test:ci": "npm t -- --ci",
     "style": "npm run format -- --list-different && npm run lint",
     "style:fix": "npm run format:fix && npm run lint:fix",
-    "format": "prettier \"**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
+    "format": "prettier \"src/**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
     "format:fix": "npm run format -- --write",
     "lint": "eslint -c ./config/.eslintrc.json src --ext .ts",
     "lint:fix": "npm run lint -- --fix",
@@ -73,7 +73,7 @@
     "release:preflight": "npm pack --dry-run"
   },
   "dependencies": {
-    "@wapc/widl": "0.0.4"
+    "@wapc/widl": "0.0.5"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.1.0",

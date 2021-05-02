@@ -44,7 +44,7 @@ export class ScaffoldVisitor extends BaseVisitor {
     this.write(`\n`);
     this.write(
       `func ${operation.name.value}(${mapArgs(
-        operation.arguments,
+        operation.parameters,
         packageName
       )})`
     );

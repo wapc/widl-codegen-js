@@ -36,7 +36,7 @@ pub use ${useName}::*;\n\n`);
     this.write(`\n`);
     this.write(
       `fn ${functionName(operation.name.value)}(${mapArgs(
-        operation.arguments,
+        operation.parameters,
         true
       )}) -> HandlerResult<`
     );

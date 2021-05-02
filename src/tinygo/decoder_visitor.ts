@@ -6,29 +6,29 @@ export class DecoderVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectFieldsBefore(context: Context): void {
-    super.triggerObjectFieldsBefore(context);
-    const object = context.object!;
+  visitTypeFieldsBefore(context: Context): void {
+    super.triggerTypeFieldsBefore(context);
+    const type = context.type!;
     this.write(
-      `func Decode${object.name.value}Nullable(decoder *msgpack.Decoder) (*${
-        object.name.value
+      `func Decode${type.name.value}Nullable(decoder *msgpack.Decoder) (*${
+        type.name.value
       }, error) {
       if isNil, err := decoder.IsNextNil(); isNil || err != nil {
         return nil, err
       }
-    decoded, err := Decode${object.name.value}(decoder)
+    decoded, err := Decode${type.name.value}(decoder)
     return &decoded, err
   }
 
-  func Decode${object.name.value}(decoder *msgpack.Decoder) (${
-        context.object!.name.value
+  func Decode${type.name.value}(decoder *msgpack.Decoder) (${
+        context.type!.name.value
       }, error) {
-    var o ${context.object!.name.value}
+    var o ${context.type!.name.value}
     err := o.Decode(decoder)
     return o, err
   }
 
-  func (o *${object.name.value}) Decode(decoder *msgpack.Decoder) error {
+  func (o *${type.name.value}) Decode(decoder *msgpack.Decoder) error {
     numFields, err := decoder.ReadMapSize()
     if err != nil {
       return err
@@ -44,7 +44,7 @@ export class DecoderVisitor extends BaseVisitor {
     );
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     this.write(`case "${field.name.value}":\n`);
     this.write(
@@ -58,10 +58,10 @@ export class DecoderVisitor extends BaseVisitor {
         isReference(field.annotations)
       )
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectFieldsAfter(context: Context): void {
+  visitTypeFieldsAfter(context: Context): void {
     if (context.fields!.length > 0) {
       this.write(`default:
         err = decoder.Skip()
@@ -74,6 +74,6 @@ export class DecoderVisitor extends BaseVisitor {
     this.write(`
     return nil
   }\n\n`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 }

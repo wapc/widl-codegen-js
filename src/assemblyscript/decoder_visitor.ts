@@ -6,19 +6,19 @@ export class DecoderVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectFieldsBefore(context: Context): void {
-    super.triggerObjectFieldsBefore(context);
+  visitTypeFieldsBefore(context: Context): void {
+    super.triggerTypeFieldsBefore(context);
     this.write(
       `    static decodeNullable(decoder: Decoder): ${
-        context.object!.name.value
+        context.type!.name.value
       } | null {
     if (decoder.isNextNil()) return null;
-    return ${context.object!.name.value}.decode(decoder);
+    return ${context.type!.name.value}.decode(decoder);
   }
 
   // decode
-  static decode(decoder: Decoder): ${context.object!.name.value} {
-    const o = new ${context.object!.name.value}();
+  static decode(decoder: Decoder): ${context.type!.name.value} {
+    const o = new ${context.type!.name.value}();
     o.decode(decoder);
     return o;
   }
@@ -32,7 +32,7 @@ export class DecoderVisitor extends BaseVisitor {
     );
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     this.write(`      `);
     if (context.fieldIndex! > 0) {
@@ -47,10 +47,10 @@ export class DecoderVisitor extends BaseVisitor {
         isReference(field.annotations)
       )
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectFieldsAfter(context: Context): void {
+  visitTypeFieldsAfter(context: Context): void {
     if (context.fields!.length > 0) {
       this.write(`      } else {
         decoder.skip();
@@ -58,6 +58,6 @@ export class DecoderVisitor extends BaseVisitor {
     }
     this.write(`    }\n`);
     this.write(`  }\n`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 }

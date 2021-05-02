@@ -2,7 +2,7 @@ import {
   Context,
   Writer,
   OperationDefinition,
-  ObjectDefinition,
+  TypeDefinition,
   FieldDefinition,
   Name,
 } from "@wapc/widl/ast";
@@ -55,20 +55,20 @@ export class ModuleVisitor extends ClassVisitor {
   }
 
   visitOperation(context: Context): void {
-    const operation = context.operation!
-    if (operation.arguments.length == 0 || operation.isUnary()) {
+    const operation = context.operation!;
+    if (operation.parameters.length == 0 || operation.isUnary()) {
       return;
     }
-    const argObject = this.convertOperationToObject(operation);
+    const argObject = this.convertOperationToType(operation);
     const args = new ClassVisitor(this.writer);
-    argObject.accept(context.clone({ object: argObject }), args);
+    argObject.accept(context.clone({ type: argObject }), args);
     super.triggerOperation(context);
   }
 
-  private convertOperationToObject(
+  private convertOperationToType(
     operation: OperationDefinition
-  ): ObjectDefinition {
-    var fields = operation.arguments.map((arg) => {
+  ): TypeDefinition {
+    var fields = operation.parameters.map((arg) => {
       return new FieldDefinition(
         arg.loc,
         arg.name,
@@ -78,7 +78,7 @@ export class ModuleVisitor extends ClassVisitor {
         arg.annotations
       );
     });
-    return new ObjectDefinition(
+    return new TypeDefinition(
       operation.loc,
       new Name(operation.name.loc, capitalize(operation.name.value) + "Args"),
       undefined,
@@ -88,21 +88,21 @@ export class ModuleVisitor extends ClassVisitor {
     );
   }
 
-  visitObjectFieldsAfter(context: Context): void {
-    var object = context.object!;
-    super.visitObjectFieldsAfter(context);
+  visitTypeFieldsAfter(context: Context): void {
+    var type = context.type!;
+    super.visitTypeFieldsAfter(context);
     this.write(`\n`);
-    this.write(`  static newBuilder(): ${object.name.value}Builder {
-      return new ${object.name.value}Builder();
+    this.write(`  static newBuilder(): ${type.name.value}Builder {
+      return new ${type.name.value}Builder();
     }\n`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 
-  visitObjectAfter(context: Context): void {
+  visitTypeAfter(context: Context): void {
     this.write(`}\n\n`);
 
     const builder = new BuilderVisitor(this.writer);
-    context.object!.accept(context, builder);
-    super.triggerObjectAfter(context);
+    context.type!.accept(context, builder);
+    super.triggerTypeAfter(context);
   }
 }

@@ -24,7 +24,7 @@ export class WrappersVisitor extends BaseVisitor {
     const operation = context.operation!;
     this.write(
       `var ${operation.name.value}Handler: (${mapArgs(
-        operation.arguments
+        operation.parameters
       )}) => ${expandType(
         operation.type,
         true,
@@ -52,7 +52,7 @@ export class WrappersVisitor extends BaseVisitor {
       this.write(
         `${operation.name.value}Handler(${varAccessArg(
           "inputArgs",
-          operation.arguments
+          operation.parameters
         )});\n`
       );
     }

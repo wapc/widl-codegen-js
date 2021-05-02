@@ -3,7 +3,7 @@ import {
   Context,
   FieldDefinition,
   Name,
-  ObjectDefinition,
+  TypeDefinition,
   OperationDefinition,
   Writer,
 } from "@wapc/widl/ast";
@@ -29,14 +29,14 @@ export class ModuleVisitor extends BaseVisitor {
         if (context.operation!.isUnary()) {
           return;
         }
-        const argObject = this.convertOperationToObject(context.operation!);
+        const type = this.convertOperationToType(context.operation!);
         const struct = new StructVisitor(this.writer);
-        argObject.accept(context.clone({ object: argObject }), struct);
+        type.accept(context.clone({ type: type }), struct);
       }
     );
-    this.setCallback("Object", "struct", (context: Context): void => {
+    this.setCallback("Type", "struct", (context: Context): void => {
       const struct = new StructVisitor(this.writer);
-      context.object!.accept(context, struct);
+      context.type!.accept(context, struct);
     });
   }
 
@@ -52,20 +52,20 @@ export class ModuleVisitor extends BaseVisitor {
     super.triggerDocumentBefore(context);
   }
 
-  private convertOperationToObject(
+  private convertOperationToType(
     operation: OperationDefinition
-  ): ObjectDefinition {
-    var fields = operation.arguments.map((arg) => {
+  ): TypeDefinition {
+    var fields = operation.parameters.map((param) => {
       return new FieldDefinition(
-        arg.loc,
-        arg.name,
-        arg.description,
-        arg.type,
-        arg.default,
-        arg.annotations
+        param.loc,
+        param.name,
+        param.description,
+        param.type,
+        param.default,
+        param.annotations
       );
     });
-    return new ObjectDefinition(
+    return new TypeDefinition(
       operation.loc,
       new Name(operation.name.loc, capitalize(operation.name.value) + "Args"),
       undefined,
