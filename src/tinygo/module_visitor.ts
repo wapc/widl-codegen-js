@@ -3,7 +3,7 @@ import {
   Context,
   Writer,
   OperationDefinition,
-  ObjectDefinition,
+  TypeDefinition,
   FieldDefinition,
   Name,
 } from "@wapc/widl/ast";
@@ -48,18 +48,18 @@ export class ModuleVisitor extends BaseVisitor {
       "OperationAfter",
       "arguments",
       (context: Context): void => {
-        const operation = context.operation!
-        if (operation.arguments.length == 0 || operation.isUnary()) {
+        const operation = context.operation!;
+        if (operation.parameters.length == 0 || operation.isUnary()) {
           return;
         }
-        const argObject = this.convertOperationToObject(operation!);
+        const type = this.convertOperationToType(operation!);
         const struct = new StructVisitor(this.writer);
-        argObject.accept(context.clone({ object: argObject }), struct);
+        type.accept(context.clone({ type: type }), struct);
       }
     );
-    this.setCallback("Object", "struct", (context: Context): void => {
+    this.setCallback("Type", "struct", (context: Context): void => {
       const struct = new StructVisitor(this.writer);
-      context.object!.accept(context, struct);
+      context.type!.accept(context, struct);
     });
   }
 
@@ -74,10 +74,10 @@ export class ModuleVisitor extends BaseVisitor {
     super.triggerDocumentBefore(context);
   }
 
-  private convertOperationToObject(
+  private convertOperationToType(
     operation: OperationDefinition
-  ): ObjectDefinition {
-    var fields = operation.arguments.map((arg) => {
+  ): TypeDefinition {
+    var fields = operation.parameters.map((arg) => {
       return new FieldDefinition(
         arg.loc,
         arg.name,
@@ -87,7 +87,7 @@ export class ModuleVisitor extends BaseVisitor {
         arg.annotations
       );
     });
-    return new ObjectDefinition(
+    return new TypeDefinition(
       operation.loc,
       new Name(operation.name.loc, capitalize(operation.name.value) + "Args"),
       undefined,

@@ -56,10 +56,10 @@ pub struct ${className} {
     const operation = context.operation!;
     this.write(formatComment("  /// ", operation.description));
     this.write(`pub fn ${functionName(operation.name.value)}(&self`);
-    operation.arguments.map((arg, index) => {
+    operation.parameters.map((param, index) => {
       this.write(
-        `, ${fieldName(arg.name.value)}: ${expandType(
-          arg.type,
+        `, ${fieldName(param.name.value)}: ${expandType(
+          param.type,
           undefined,
           false,
           false
@@ -82,7 +82,7 @@ pub struct ${className} {
     }
     this.write(` {\n`);
 
-    if (operation.arguments.length == 0) {
+    if (operation.parameters.length == 0) {
       this.write(
         `host_call(
         &self.binding, 
@@ -102,9 +102,9 @@ pub struct ${className} {
       );
     } else {
       this.write(`let input_args = ${capitalize(operation.name.value)}Args{\n`);
-      operation.arguments.map((arg) => {
-        const argName = arg.name.value;
-        this.write(`  ${fieldName(argName)},\n`);
+      operation.parameters.map((param) => {
+        const paramName = param.name.value;
+        this.write(`  ${fieldName(paramName)},\n`);
       });
       this.write(`};\n`);
       this.write(`host_call(
@@ -117,11 +117,11 @@ pub struct ${className} {
     if (!retVoid) {
       this.write(`.map(|vec| {
         let resp = deserialize::<${expandType(
-        operation.type,
-        undefined,
-        true,
-        isReference(operation.annotations)
-      )}>(vec.as_ref()).unwrap();
+          operation.type,
+          undefined,
+          true,
+          isReference(operation.annotations)
+        )}>(vec.as_ref()).unwrap();
         resp
       })\n`);
     } else {

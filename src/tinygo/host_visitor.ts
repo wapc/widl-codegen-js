@@ -40,12 +40,17 @@ func New${className}(binding string) *${className} {
     const operation = context.operation!;
     this.write(formatComment("    // ", operation.description));
     this.write(`func (h *${className}) ${capitalize(operation.name.value)}(`);
-    operation.arguments.map((arg, index) => {
+    operation.parameters.map((param, index) => {
       if (index > 0) {
         this.write(`, `);
       }
       this.write(
-        `${parameterName(arg.name.value)} ${expandType(arg.type, undefined, true, false)}`
+        `${parameterName(param.name.value)} ${expandType(
+          param.type,
+          undefined,
+          true,
+          false
+        )}`
       );
     });
     this.write(`) `);
@@ -65,7 +70,7 @@ func New${className}(binding string) *${className} {
       defaultVal = defaultValueForType(operation.type);
       defaultValWithComma = defaultVal + ", ";
     }
-    if (operation.arguments.length == 0) {
+    if (operation.parameters.length == 0) {
       if (!retVoid) {
         this.write(`payload, err := `);
       } else {
@@ -95,9 +100,9 @@ func New${className}(binding string) *${className} {
       );
     } else {
       this.write(`inputArgs := ${fieldName(operation.name.value)}Args{\n`);
-      operation.arguments.map((arg) => {
-        const argName = arg.name.value;
-        this.write(`  ${fieldName(argName)}: ${parameterName(argName)},\n`);
+      operation.parameters.map((param) => {
+        const paramName = param.name.value;
+        this.write(`  ${fieldName(paramName)}: ${parameterName(paramName)},\n`);
       });
       this.write(`}\n`);
       this.write(`inputBytes, err := msgpack.ToBytes(&inputArgs)
@@ -134,12 +139,14 @@ func New${className}(binding string) *${className} {
         var resultVar = "";
         if (operation.type instanceof Optional) {
           resultVar = "result";
-          this.write(`var result ${expandType(
-            operation.type,
-            undefined,
-            true,
-            isReference(operation.annotations)
-          )}\n`)
+          this.write(
+            `var result ${expandType(
+              operation.type,
+              undefined,
+              true,
+              isReference(operation.annotations)
+            )}\n`
+          );
         }
         this.write(
           `${read(

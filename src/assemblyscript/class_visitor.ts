@@ -9,15 +9,13 @@ export class ClassVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectBefore(context: Context): void {
-    super.triggerObjectBefore(context);
-    this.write(formatComment("// ", context.object!.description));
-    this.write(
-      `export class ${context.object!.name.value} implements Codec {\n`
-    );
+  visitTypeBefore(context: Context): void {
+    super.triggerTypeBefore(context);
+    this.write(formatComment("// ", context.type!.description));
+    this.write(`export class ${context.type!.name.value} implements Codec {\n`);
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     this.write(formatComment("  // ", field.description));
     this.write(
@@ -27,16 +25,16 @@ export class ClassVisitor extends BaseVisitor {
         isReference(field.annotations)
       )} = ${defValue(field)};\n`
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectFieldsAfter(context: Context): void {
+  visitTypeFieldsAfter(context: Context): void {
     this.write(`\n`);
     const decoder = new DecoderVisitor(this.writer);
-    context.object!.accept(context, decoder);
+    context.type!.accept(context, decoder);
     this.write(`\n`);
     const encoder = new EncoderVisitor(this.writer);
-    context.object!.accept(context, encoder);
+    context.type!.accept(context, encoder);
     this.write(`\n`);
 
     this.write(`  toBuffer(): ArrayBuffer {
@@ -47,11 +45,11 @@ export class ClassVisitor extends BaseVisitor {
       this.encode(encoder);
       return buffer;
     }\n`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 
-  visitObjectAfter(context: Context): void {
+  visitTypeAfter(context: Context): void {
     this.write(`}\n\n`);
-    super.triggerObjectAfter(context);
+    super.triggerTypeAfter(context);
   }
 }

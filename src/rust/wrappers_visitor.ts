@@ -29,12 +29,12 @@ lazy_static::lazy_static! {\n`);
         operation.name.value
       ).toUpperCase()}: std::sync::RwLock<Option<fn(`
     );
-    operation.arguments.forEach((arg, i) => {
+    operation.parameters.forEach((param, i) => {
       if (i > 0) {
         this.write(`, `);
       }
       this.write(
-        expandType(arg.type, undefined, true, isReference(arg.annotations))
+        expandType(param.type, undefined, true, isReference(param.annotations))
       );
     });
     this.write(`) -> HandlerResult<`);
@@ -96,7 +96,7 @@ fn ${functionName(
         operation.name.value
       ).toUpperCase()}.read().unwrap().unwrap();\n`);
       this.write(
-        `let result = lock(${varAccessArg("input", operation.arguments)})?;\n`
+        `let result = lock(${varAccessArg("input", operation.parameters)})?;\n`
       );
     }
     this.write(`serialize(result)\n`);

@@ -9,13 +9,13 @@ export class StructVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectBefore(context: Context): void {
-    super.triggerObjectBefore(context);
-    this.write(formatComment("    // ", context.object!.description));
-    this.write(`type ${context.object!.name.value} struct {\n`);
+  visitTypeBefore(context: Context): void {
+    super.triggerTypeBefore(context);
+    this.write(formatComment("    // ", context.type!.description));
+    this.write(`type ${context.type!.name.value} struct {\n`);
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     this.write(formatComment("    // ", field.description));
     this.write(
@@ -26,17 +26,17 @@ export class StructVisitor extends BaseVisitor {
         isReference(field.annotations)
       )}\n`
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectAfter(context: Context): void {
+  visitTypeAfter(context: Context): void {
     this.write(`}\n\n`);
-    super.triggerObjectAfter(context);
-    const object = context.object!;
+    super.triggerTypeAfter(context);
+    const type = context.type!;
     const decoder = new DecoderVisitor(this.writer);
-    object.accept(context, decoder);
+    type.accept(context, decoder);
     const encoder = new EncoderVisitor(this.writer);
-    object.accept(context, encoder);
+    type.accept(context, encoder);
     this.write(`\n`);
   }
 }

@@ -23,12 +23,12 @@ impl ${className} {\n`);
     const operation = context.operation!;
     this.write(formatComment("    /// ", operation.description));
     this.write(`pub fn register_${functionName(operation.name.value)}(f: fn(`);
-    operation.arguments.forEach((arg, i) => {
+    operation.parameters.forEach((param, i) => {
       if (i > 0) {
         this.write(`, `);
       }
       this.write(
-        expandType(arg.type, undefined, true, isReference(arg.annotations))
+        expandType(param.type, undefined, true, isReference(param.annotations))
       );
     });
     this.write(`) -> HandlerResult<`);

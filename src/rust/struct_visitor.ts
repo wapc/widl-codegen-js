@@ -7,15 +7,15 @@ export class StructVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectBefore(context: Context): void {
-    super.triggerObjectBefore(context);
-    this.write(formatComment("/// ", context.object!.description));
+  visitTypeBefore(context: Context): void {
+    super.triggerTypeBefore(context);
+    this.write(formatComment("/// ", context.type!.description));
     this
       .write(`#[derive(Debug, PartialEq, Deserialize, Serialize, Default, Clone)]
-pub struct ${context.object!.name.value} {\n`);
+pub struct ${context.type!.name.value} {\n`);
   }
 
-  visitObjectField(context: Context): void {
+  visitTypeField(context: Context): void {
     const field = context.field!;
     const expandedType = expandType(
       field.type!,
@@ -31,10 +31,10 @@ pub struct ${context.object!.name.value} {\n`);
       `\t#[serde(rename = "${field.name.value}")]
       \tpub ${fieldName(field.name.value)}: ${expandedType},\n`
     );
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectAfter(context: Context): void {
+  visitTypeAfter(context: Context): void {
     this.write(`}\n\n`);
   }
 }

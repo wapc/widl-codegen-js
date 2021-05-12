@@ -195,7 +195,7 @@ export function noCase(input: string, options: Options = {}) {
 /**
  * Replace `re` in the input string with the replacement value.
  */
- function replace(input: string, re: RegExp | RegExp[], value: string) {
+function replace(input: string, re: RegExp | RegExp[], value: string) {
   if (re instanceof RegExp) return input.replace(re, value);
   return re.reduce((input, re) => input.replace(re, value), input);
 }
@@ -203,7 +203,7 @@ export function noCase(input: string, options: Options = {}) {
 /**
  * Locale character mapping rules.
  */
- interface Locale {
+interface Locale {
   regexp: RegExp;
   map: Record<string, string>;
 }

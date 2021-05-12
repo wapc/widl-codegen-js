@@ -1,4 +1,4 @@
-import { Context, Writer, BaseVisitor, Optional } from "@wapc/widl/ast";
+import { Context, Writer, BaseVisitor, Optional, Kind } from "@wapc/widl/ast";
 import {
   expandType,
   isReference,
@@ -39,9 +39,14 @@ export class HostVisitor extends BaseVisitor {
         operation.name.value
       )}(ctx context.Context`
     );
-    operation.arguments.map((arg, index) => {
+    operation.parameters.map((param, index) => {
       this.write(
-        `, ${arg.name.value} ${expandType(arg.type, undefined, false, false)}`
+        `, ${param.name.value} ${expandType(
+          param.type,
+          undefined,
+          false,
+          false
+        )}`
       );
     });
     this.write(`) `);
@@ -68,8 +73,8 @@ export class HostVisitor extends BaseVisitor {
     }
     if (operation.isUnary()) {
       this.write(`inputPayload, err := msgpack.Marshal(${
-        operation.arguments[0].type.isKind(Optional) ? "" : "&"
-      }${operation.arguments[0].name.value})
+        operation.parameters[0].type.isKind(Kind.Optional) ? "" : "&"
+      }${operation.parameters[0].name.value})
       if err != nil {
         return ret, err
       }\n`);
@@ -85,8 +90,8 @@ export class HostVisitor extends BaseVisitor {
       );
     } else {
       this.write(`inputArgs := ${fieldName(operation.name.value)}Args{\n`);
-      operation.arguments.map((arg) => {
-        const argName = arg.name.value;
+      operation.parameters.map((param) => {
+        const argName = param.name.value;
         this.write(`  ${fieldName(argName)}: ${argName},\n`);
       });
       this.write(`}\n`);

@@ -16,8 +16,8 @@ export class ScaffoldVisitor extends BaseVisitor {
 
   visitDocumentBefore(context: Context): void {
     super.visitDocumentBefore(context);
-    const types = new TypesVisitor(this.writer);
-    context.document?.accept(context, types);
+    const typesVisitor = new TypesVisitor(this.writer);
+    context.document?.accept(context, typesVisitor);
   }
 
   visitAllOperationsBefore(context: Context): void {
@@ -33,7 +33,7 @@ export class ScaffoldVisitor extends BaseVisitor {
     this.write(`\n`);
     this.write(
       `function ${operation.name.value}(${mapArgs(
-        operation.arguments
+        operation.parameters
       )}): ${expandType(
         operation.type,
         true,
@@ -105,18 +105,18 @@ class TypesVisitor extends BaseVisitor {
     }
   }
 
-  visitObject(context: Context): void {
+  visitType(context: Context): void {
     if (!this.hasObjects) {
       this.write(`import { `);
       this.hasObjects = true;
     } else {
       this.write(`, `);
     }
-    this.write(`${context.object!.name.value}`);
+    this.write(`${context.type!.name.value}`);
   }
 
-  visitObjectsAfter(context: Context): void {
-    if (this.hasOperations == true) {
+  visitTypesAfter(context: Context): void {
+    if (this.hasOperations) {
       if (!this.hasObjects) {
         this.write(`import { `);
       }
@@ -128,7 +128,7 @@ class TypesVisitor extends BaseVisitor {
       this.hasObjects = true;
     }
 
-    if (this.hasObjects) {
+    if (this.hasObjects || this.hasOperations) {
       const packageName = context.config.package || "./module";
       this.write(` } from "${packageName}";\n\n`);
     }

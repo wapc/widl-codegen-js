@@ -35,18 +35,20 @@ export class HostVisitor extends BaseVisitor {
     const operation = context.operation!;
     this.write(formatComment("  // ", operation.description));
     this.write(`  ${camelCase(operation.name.value)}(`);
-    operation.arguments.map((arg, index) => {
+    operation.parameters.map((param, index) => {
       if (index > 0) {
         this.write(`, `);
       }
-      this.write(`${arg.name.value}: ${expandType(arg.type, false, false)}`);
+      this.write(
+        `${param.name.value}: ${expandType(param.type, false, false)}`
+      );
     });
     this.write(`): ${expandType(operation.type, true, false)} {\n`);
 
     this.write(`  `);
     const retVoid = isVoid(operation.type);
 
-    if (operation.arguments.length == 0) {
+    if (operation.parameters.length == 0) {
       if (!retVoid) {
         this.write(`const payload = `);
       }
@@ -70,9 +72,9 @@ export class HostVisitor extends BaseVisitor {
       this.write(
         `const inputArgs = new ${capitalize(operation.name.value)}Args();\n`
       );
-      operation.arguments.map((arg) => {
-        const argName = arg.name.value;
-        this.write(`  inputArgs.${argName} = ${argName};\n`);
+      operation.parameters.map((param) => {
+        const paramName = param.name.value;
+        this.write(`  inputArgs.${paramName} = ${paramName};\n`);
       });
       if (!retVoid) {
         this.write(`const payload = `);
@@ -98,11 +100,13 @@ export class HostVisitor extends BaseVisitor {
         var resultVar = "";
         if (operation.type instanceof Optional) {
           resultVar = "result";
-          this.write(`var result: ${expandType(
-            operation.type,
-            true,
-            isReference(operation.annotations)
-          )};\n`)
+          this.write(
+            `var result: ${expandType(
+              operation.type,
+              true,
+              isReference(operation.annotations)
+            )};\n`
+          );
         }
         this.write(
           `${read(

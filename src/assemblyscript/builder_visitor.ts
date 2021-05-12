@@ -6,15 +6,15 @@ export class BuilderVisitor extends BaseVisitor {
     super(writer);
   }
 
-  visitObjectBefore(context: Context): void {
-    super.triggerObjectBefore(context);
-    const className = context.object!.name.value;
+  visitTypeBefore(context: Context): void {
+    super.triggerTypeBefore(context);
+    const className = context.type!.name.value;
     this.write(`export class ${className}Builder {
   instance: ${className} = new ${className}();\n`);
   }
 
-  visitObjectField(context: Context): void {
-    const className = context.object!.name.value;
+  visitTypeField(context: Context): void {
+    const className = context.type!.name.value;
     const field = context.field!;
     this.write(`\n`);
     this.write(`with${capitalize(field.name.value)}(${
@@ -27,19 +27,19 @@ export class BuilderVisitor extends BaseVisitor {
     this.instance.${field.name.value} = ${field.name.value};
     return this;
   }\n`);
-    super.triggerObjectField(context);
+    super.triggerTypeField(context);
   }
 
-  visitObjectFieldsAfter(context: Context): void {
+  visitTypeFieldsAfter(context: Context): void {
     this.write(`\n`);
-    this.write(`  build(): ${context.object!.name.value} {
+    this.write(`  build(): ${context.type!.name.value} {
       return this.instance;
     }`);
-    super.triggerObjectFieldsAfter(context);
+    super.triggerTypeFieldsAfter(context);
   }
 
-  visitObjectAfter(context: Context): void {
+  visitTypeAfter(context: Context): void {
     this.write(`}\n\n`);
-    super.triggerObjectAfter(context);
+    super.triggerTypeAfter(context);
   }
 }

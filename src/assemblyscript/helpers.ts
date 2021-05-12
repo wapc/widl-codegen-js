@@ -1,15 +1,16 @@
 import {
   Named,
-  Map,
-  List,
+  MapType,
+  ListType,
   Optional,
   FieldDefinition,
   Type,
   Annotation,
   ValuedDefinition,
   OperationDefinition,
-  InputValueDefinition,
-  ObjectDefinition,
+  ParameterDefinition,
+  TypeDefinition,
+  Kind,
 } from "@wapc/widl/ast";
 import { translations, primitives, decodeFuncs, encodeFuncs } from "./constant";
 
@@ -69,9 +70,9 @@ export function defValue(fieldDef: FieldDefinition): string {
   const type = fieldDef.type;
   if (fieldDef.default) {
     let returnVal = fieldDef.default.getValue();
-    if (fieldDef.type.isKind(Named)) {
+    if (fieldDef.type.isKind(Kind.Named)) {
       returnVal =
-        (fieldDef.type as Named).Name.value == "string"
+        (fieldDef.type as Named).name.value == "string"
           ? strQuote(returnVal)
           : returnVal;
     }
@@ -81,15 +82,15 @@ export function defValue(fieldDef: FieldDefinition): string {
   switch (type.constructor) {
     case Optional:
       return "null";
-    case List:
-    case Map:
+    case ListType:
+    case MapType:
       return `new ${expandType(
         type,
         false,
         isReference(fieldDef.annotations)
       )}()`;
     case Named:
-      switch ((type as Named).Name.value) {
+      switch ((type as Named).name.value) {
         case "ID":
         case "string":
           return '""';
@@ -109,7 +110,7 @@ export function defValue(fieldDef: FieldDefinition): string {
         case "bytes":
           return "new ArrayBuffer(0)";
         default:
-          return `new ${capitalize((type as Named).Name.value)}()`; // reference to something else
+          return `new ${capitalize((type as Named).name.value)}()`; // reference to something else
       }
   }
   return `???${expandType(type, false, isReference(fieldDef.annotations))}???`;
@@ -119,11 +120,11 @@ export function defaultValueForType(type: Type): string {
   switch (type.constructor) {
     case Optional:
       return "null";
-    case List:
-    case Map:
+    case ListType:
+    case MapType:
       return `new ${expandType(type, false, false)}()`;
     case Named:
-      switch ((type as Named).Name.value) {
+      switch ((type as Named).name.value) {
         case "ID":
         case "string":
           return '""';
@@ -143,7 +144,7 @@ export function defaultValueForType(type: Type): string {
         case "bytes":
           return "new ArrayBuffer(0)";
         default:
-          return `new ${capitalize((type as Named).Name.value)}()`; // reference to something else
+          return `new ${capitalize((type as Named).name.value)}()`; // reference to something else
       }
   }
   return "???";
@@ -169,25 +170,25 @@ export const expandType = (
   isReference: boolean
 ): string => {
   switch (true) {
-    case type.isKind(Named):
+    case type.isKind(Kind.Named):
       if (isReference) {
         return "string";
       }
-      const namedValue = (type as Named).Name.value;
+      const namedValue = (type as Named).name.value;
       const translation = translations.get(namedValue);
       if (translation != undefined) {
         return translation!;
       }
       return namedValue;
-    case type.isKind(Map):
-      return `Map<${expandType(
-        (type as Map).keyType,
+    case type.isKind(Kind.MapType):
+      return `MapType<${expandType(
+        (type as MapType).keyType,
         true,
         isReference
-      )},${expandType((type as Map).valueType, true, isReference)}>`;
-    case type.isKind(List):
-      return `Array<${expandType((type as List).type, true, isReference)}>`;
-    case type.isKind(Optional):
+      )},${expandType((type as MapType).valueType, true, isReference)}>`;
+    case type.isKind(Kind.ListType):
+      return `Array<${expandType((type as ListType).type, true, isReference)}>`;
+    case type.isKind(Kind.Optional):
       let expanded = expandType((type as Optional).type, true, isReference);
       if (useOptional) {
         return `${expanded} | null`;
@@ -216,62 +217,62 @@ export function read(
     prefix = variable + " = ";
   }
   switch (true) {
-    case t.isKind(Named):
+    case t.isKind(Kind.Named):
       if (isReference) {
         return prefix + "decoder.readString()";
       }
       let namedNode = t as Named;
-      if (decodeFuncs.has(namedNode.Name.value)) {
+      if (decodeFuncs.has(namedNode.name.value)) {
         if (prevOptional) {
-          if (primitives.has(namedNode.Name.value))
+          if (primitives.has(namedNode.name.value))
             return `${prefix}decoder.${decodeFuncs.get(
-              namedNode.Name.value
+              namedNode.name.value
             )}();\n`;
         }
-        return `${prefix}decoder.${decodeFuncs.get(namedNode.Name.value)}();\n`;
+        return `${prefix}decoder.${decodeFuncs.get(namedNode.name.value)}();\n`;
       }
-      return `${prefix}${namedNode.Name.value}.decode(decoder);`;
-    case t.isKind(Map):
+      return `${prefix}${namedNode.name.value}.decode(decoder);`;
+    case t.isKind(Kind.MapType):
       let code = `${prefix}decoder.read`;
       if (prevOptional) {
         code += "Nullable";
       }
-      code += "Map(\n";
+      code += "MapType(\n";
       code += `(decoder: Decoder): ${expandType(
-        (t as Map).keyType,
+        (t as MapType).keyType,
         true,
         isReference
       )} => {\n`;
-      code += read("", (t as Map).keyType, false, isReference);
+      code += read("", (t as MapType).keyType, false, isReference);
       code += "},\n";
       code += `(decoder: Decoder): ${expandType(
-        (t as Map).valueType,
+        (t as MapType).valueType,
         true,
         isReference
       )} => {\n`;
-      code += read("", (t as Map).valueType, false, isReference);
+      code += read("", (t as MapType).valueType, false, isReference);
       code += "});\n";
       return code;
-    case t.isKind(List):
+    case t.isKind(Kind.ListType):
       let listCode = "";
       listCode += `${prefix}decoder.read`;
       if (prevOptional) {
         listCode += "Nullable";
       }
       listCode += `Array((decoder: Decoder): ${expandType(
-        (t as List).type,
+        (t as ListType).type,
         true,
         isReference
       )} => {\n`;
-      listCode += read("", (t as List).type, false, isReference);
+      listCode += read("", (t as ListType).type, false, isReference);
       listCode += "});\n";
       return listCode;
-    case t.isKind(Optional):
+    case t.isKind(Kind.Optional):
       const optNode = t as Optional;
       optNode.type;
       switch (true) {
-        case optNode.type.isKind(List):
-        case optNode.type.isKind(Map):
+        case optNode.type.isKind(Kind.ListType):
+        case optNode.type.isKind(Kind.MapType):
           return prefix + read(variable, optNode.type, true, isReference);
       }
       let optCode = "";
@@ -307,24 +308,24 @@ export function write(
 ): string {
   let code = "";
   switch (true) {
-    case t.isKind(Named):
+    case t.isKind(Kind.Named):
       if (isReference) {
         return `${typeInst}.writeString(${variable});`;
       }
       const namedNode = t as Named;
-      if (encodeFuncs.has(namedNode.Name.value)) {
+      if (encodeFuncs.has(namedNode.name.value)) {
         return `${typeInst}.${encodeFuncs.get(
-          namedNode.Name.value
+          namedNode.name.value
         )}(${variable});\n`;
       }
       return `${variable}.${typeMeth}(${typeInst});\n`;
-    case t.isKind(Map):
-      const mappedNode = t as Map;
+    case t.isKind(Kind.MapType):
+      const mappedNode = t as MapType;
       code += typeInst + ".write";
       if (prevOptional) {
         code += "Nullable";
       }
-      code += "Map(" + variable + ",\n";
+      code += "MapType(" + variable + ",\n";
       code +=
         "(" +
         typeInst +
@@ -362,8 +363,8 @@ export function write(
       );
       code += "});\n";
       return code;
-    case t.isKind(List):
-      const listNode = t as List;
+    case t.isKind(Kind.ListType):
+      const listNode = t as ListType;
       code += typeInst + ".write";
       if (prevOptional) {
         code += "Nullable";
@@ -389,11 +390,11 @@ export function write(
       );
       code += "});\n";
       return code;
-    case t.isKind(Optional):
+    case t.isKind(Kind.Optional):
       const optionalNode = t as Optional;
       switch (true) {
-        case (t as Optional).type.isKind(List):
-        case (t as Optional).type.isKind(Map):
+        case (t as Optional).type.isKind(Kind.ListType):
+        case (t as Optional).type.isKind(Kind.MapType):
           return write(
             typeInst,
             typeClass,
@@ -428,8 +429,8 @@ export function write(
  * @param t Node that is a Type node
  */
 export function isVoid(t: Type): boolean {
-  if (t.isKind(Named)) {
-    return (t as Named).Name.value == "void";
+  if (t.isKind(Kind.Named)) {
+    return (t as Named).name.value == "void";
   }
   return false;
 }
@@ -439,15 +440,15 @@ export function isVoid(t: Type): boolean {
  * @param t Node that is a Type node
  */
 export function isObject(t: Type): boolean {
-  if (t.isKind(Named)) {
-    return !primitives.has((t as Named).Name.value);
+  if (t.isKind(Kind.Named)) {
+    return !primitives.has((t as Named).name.value);
   }
   return false;
 }
 
 /**
  * Determines if one of the annotations provided is a reference
- * @param annotations array of Annotations
+ * @param annotations array of Directives
  */
 export function isReference(annotations: Annotation[]): boolean {
   for (let annotation of annotations) {
@@ -479,40 +480,38 @@ export function capitalize(str: string): string {
 export function opsAsFns(ops: OperationDefinition[]): string {
   return ops
     .map((op) => {
-      return `function ${op.name.value}(${mapArgs(op.arguments)}): ${expandType(
-        op.type,
-        true,
-        isReference(op.annotations)
-      )} {\n}`;
+      return `function ${op.name.value}(${mapArgs(
+        op.parameters
+      )}): ${expandType(op.type, true, isReference(op.annotations))} {\n}`;
     })
     .join("\n");
 }
 
 /**
  * returns string of args mapped to their type
- * @param args InputValueDefintion array which is an array of the arguments
+ * @param args ParameterDefinition array which is an array of the arguments
  */
-export function mapArgs(args: InputValueDefinition[]): string {
-  return args
-    .map((arg) => {
-      return mapArg(arg);
+export function mapArgs(params: ParameterDefinition[]): string {
+  return params
+    .map((param) => {
+      return mapArg(param);
     })
     .join(", ");
 }
 
-export function mapArg(arg: InputValueDefinition): string {
-  return `${arg.name.value}: ${expandType(
-    arg.type,
+export function mapArg(param: ParameterDefinition): string {
+  return `${param.name.value}: ${expandType(
+    param.type,
     true,
-    isReference(arg.annotations)
+    isReference(param.annotations)
   )}`;
 }
 
 /**
  * returns if a widl type is a node
- * @param o ObjectDefintion which correlates to a widl Type
+ * @param o TypeDefinition which correlates to a widl Type
  */
-export function isNode(o: ObjectDefinition): boolean {
+export function isNode(o: TypeDefinition): boolean {
   for (const field of o.fields) {
     if (field.name.value.toLowerCase() == "id") {
       return true;
@@ -523,11 +522,11 @@ export function isNode(o: ObjectDefinition): boolean {
 
 export function varAccessArg(
   variable: string,
-  args: InputValueDefinition[]
+  params: ParameterDefinition[]
 ): string {
-  return args
-    .map((arg) => {
-      return `${variable}.${arg.name.value}`;
+  return params
+    .map((param) => {
+      return `${variable}.${param.name.value}`;
     })
     .join(", ");
 }

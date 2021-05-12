@@ -31,7 +31,7 @@ export class HandlersVisitor extends BaseVisitor {
     if (operation.isUnary()) {
       this.write(mapArg(operation.unaryOp()));
     } else {
-      this.write(mapArgs(operation.arguments));
+      this.write(mapArgs(operation.parameters));
     }
     this.write(`)`);
     if (!isVoid(operation.type)) {
