@@ -40,7 +40,7 @@ export class HostVisitor extends BaseVisitor {
         this.write(`, `);
       }
       this.write(
-        `${param.name.value}: ${expandType(param.type, false, false)}`
+        `${param.name.value}: ${expandType(param.type, true, false)}`
       );
     });
     this.write(`): ${expandType(operation.type, true, false)} {\n`);
@@ -64,8 +64,7 @@ export class HostVisitor extends BaseVisitor {
       this.write(
         `hostCall(this.binding, ${strQuote(
           context.namespace.name.value
-        )}, ${strQuote(operation.name.value)}, ${
-          operation.unaryOp().name.value
+        )}, ${strQuote(operation.name.value)}, ${operation.unaryOp().name.value
         }.toBuffer());\n`
       );
     } else {
