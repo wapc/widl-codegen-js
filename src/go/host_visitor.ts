@@ -44,7 +44,7 @@ export class HostVisitor extends BaseVisitor {
         `, ${param.name.value} ${expandType(
           param.type,
           undefined,
-          false,
+          true,
           false
         )}`
       );
@@ -72,9 +72,8 @@ export class HostVisitor extends BaseVisitor {
       );
     }
     if (operation.isUnary()) {
-      this.write(`inputPayload, err := msgpack.Marshal(${
-        operation.parameters[0].type.isKind(Kind.Optional) ? "" : "&"
-      }${operation.parameters[0].name.value})
+      this.write(`inputPayload, err := msgpack.Marshal(${operation.parameters[0].type.isKind(Kind.Optional) ? "" : "&"
+        }${operation.parameters[0].name.value})
       if err != nil {
         return ret, err
       }\n`);
