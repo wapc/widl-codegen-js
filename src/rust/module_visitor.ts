@@ -49,7 +49,7 @@ export class ModuleVisitor extends BaseVisitor {
       "arguments",
       (context: Context): void => {
         const operation = context.operation!;
-        if (operation.parameters.length == 0 || operation.isUnary()) {
+        if (operation.isUnary()) {
           return;
         }
         const type = this.convertOperationToType(operation);
