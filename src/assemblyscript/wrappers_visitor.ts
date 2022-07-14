@@ -9,6 +9,7 @@ import {
   isObject,
   mapArgs,
   varAccessArg,
+  isBytes,
 } from "./helpers";
 import { shouldIncludeHandler } from "../utils";
 
@@ -59,6 +60,9 @@ export class WrappersVisitor extends BaseVisitor {
     if (isVoid(operation.type)) {
       this.visitWrapperBeforeReturn(context);
       this.write(`return new ArrayBuffer(0);\n`);
+    } else if (isBytes(operation.type)) {
+      this.visitWrapperBeforeReturn(context);
+      this.write(`return response;\n`);
     } else if (isObject(operation.type)) {
       this.visitWrapperBeforeReturn(context);
       this.write(`return response.toBuffer();\n`);

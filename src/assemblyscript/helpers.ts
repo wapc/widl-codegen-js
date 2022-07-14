@@ -412,7 +412,7 @@ export function write(
         typeInst,
         typeClass,
         typeMeth,
-        variable,
+        variable + "!",
         optionalNode.type,
         true,
         isReference
@@ -431,6 +431,17 @@ export function write(
 export function isVoid(t: Type): boolean {
   if (t.isKind(Kind.Named)) {
     return (t as Named).name.value == "void";
+  }
+  return false;
+}
+
+/**
+ * Determines if a node is a bytes node
+ * @param t Node that is a Type node
+ */
+ export function isBytes(t: Type): boolean {
+  if (t.isKind(Kind.Named)) {
+    return (t as Named).name.value == "bytes";
   }
   return false;
 }

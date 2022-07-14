@@ -7,6 +7,7 @@ import {
   capitalize,
   isVoid,
   isObject,
+  isBytes,
 } from "./helpers";
 import { camelCase, formatComment, shouldIncludeHostCall } from "../utils";
 
@@ -86,8 +87,10 @@ export class HostVisitor extends BaseVisitor {
     );\n`);
     }
     if (!retVoid) {
-      this.write(`    const decoder = new Decoder(payload);\n`);
-      if (isObject(operation.type)) {
+      if (isBytes(operation.type)) {
+        this.write(`    return payload;\n`);
+      } else if (isObject(operation.type)) {
+        this.write(`    const decoder = new Decoder(payload);\n`);
         this.write(
           `    return ${expandType(
             operation.type,
@@ -96,6 +99,7 @@ export class HostVisitor extends BaseVisitor {
           )}.decode(decoder);\n`
         );
       } else {
+        this.write(`    const decoder = new Decoder(payload);\n`);
         var resultVar = "";
         if (operation.type instanceof Optional) {
           resultVar = "result";
