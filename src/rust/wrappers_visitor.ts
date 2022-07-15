@@ -73,9 +73,9 @@ export class WrapperFuncsVisitor extends BaseVisitor {
     const operation = context.operation!;
     this.write(
       `#[cfg(feature = "guest")]
-fn ${functionName(
-        operation.name.value
-      )}_wrapper(input_payload: &[u8]) -> CallResult {\n`
+fn ${functionName(operation.name.value)}_wrapper(${
+        operation.parameters.length == 0 ? "_" : ""
+      }input_payload: &[u8]) -> CallResult {\n`
     );
     if (operation.isUnary()) {
       this.write(`let input = deserialize::<${expandType(
@@ -89,12 +89,18 @@ fn ${functionName(
       ).toUpperCase()}.read().unwrap().unwrap();
       let result = lock(input)?;\n`);
     } else {
-      this.write(`let input = deserialize::<${capitalize(
-        operation.name.value
-      )}Args>(input_payload)?;
-      let lock = ${functionName(
-        operation.name.value
-      ).toUpperCase()}.read().unwrap().unwrap();\n`);
+      if (operation.parameters.length > 0) {
+        this.write(
+          `let input = deserialize::<${capitalize(
+            operation.name.value
+          )}Args>(input_payload)?;\n`
+        );
+      }
+      this.write(
+        `let lock = ${functionName(
+          operation.name.value
+        ).toUpperCase()}.read().unwrap().unwrap();\n`
+      );
       this.write(
         `let result = lock(${varAccessArg("input", operation.parameters)})?;\n`
       );
