@@ -38,19 +38,19 @@ export class ScaffoldVisitor extends BaseVisitor {
       isReference(operation.annotations)
     );
     this.write(
-      `function ${operation.name.value}(${mapArgs(
-        operation.parameters
-      )}):`
+      `function ${operation.name.value}(${mapArgs(operation.parameters)}):`
     );
     if (isVoid(operation.type)) {
       this.write(`Error | null\n`);
     } else {
-      this.write(`Result<${expanded}>`)
+      this.write(`Result<${expanded}>`);
     }
     this.write(` {\n`);
     if (!isVoid(operation.type)) {
       const dv = defaultValueForType(operation.type);
-      this.write(`  return Result.error<${expanded}>(new Error("not implemented"));\n`);
+      this.write(
+        `  return Result.error<${expanded}>(new Error("not implemented"));\n`
+      );
     } else {
       this.write(`return null\n`);
     }

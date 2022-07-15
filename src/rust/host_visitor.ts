@@ -117,11 +117,11 @@ pub struct ${className} {
     if (!retVoid) {
       this.write(`.map(|vec| {
         let resp = deserialize::<${expandType(
-        operation.type,
-        undefined,
-        true,
-        isReference(operation.annotations)
-      )}>(vec.as_ref()).unwrap();
+          operation.type,
+          undefined,
+          true,
+          isReference(operation.annotations)
+        )}>(vec.as_ref()).unwrap();
         resp
       })\n`);
     } else {

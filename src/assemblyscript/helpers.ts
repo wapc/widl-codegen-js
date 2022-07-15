@@ -439,7 +439,7 @@ export function isVoid(t: Type): boolean {
  * Determines if a node is a bytes node
  * @param t Node that is a Type node
  */
- export function isBytes(t: Type): boolean {
+export function isBytes(t: Type): boolean {
   if (t.isKind(Kind.Named)) {
     return (t as Named).name.value == "bytes";
   }

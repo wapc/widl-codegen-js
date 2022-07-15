@@ -281,7 +281,8 @@ export function read(
       variable == "item" ||
       variable == "key" ||
       variable == "value" ||
-      variable == "ret"
+      variable == "ret" ||
+      variable == "request"
     ) {
       if (errorHandling) {
         prefix = variable + ", err := ";
@@ -308,6 +309,9 @@ export function read(
       }
       if (prevOptional) {
         return `nonNil, err = ${decodeFn}
+        if err != nil {
+          return err
+        }
         ${prefix}${namedNode.name.value == "bytes" ? "" : "&"}nonNil\n`;
       }
       return `${prefix}${decodeFn}\n`;
@@ -412,17 +416,14 @@ export function read(
       switch (true) {
         case optNode.type.isKind(Kind.ListType):
         case optNode.type.isKind(Kind.MapType):
-          return (
-            prefix +
-            read(
-              typeInstRef,
-              variable,
-              false,
-              defaultVal,
-              optNode.type,
-              true,
-              isReference
-            )
+          return read(
+            typeInstRef,
+            variable,
+            false,
+            defaultVal,
+            optNode.type,
+            true,
+            isReference
           );
       }
       let optCode = "";

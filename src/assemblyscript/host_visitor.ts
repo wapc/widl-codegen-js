@@ -94,7 +94,7 @@ export class HostVisitor extends BaseVisitor {
             context.namespace.name.value
           )}, ${strQuote(operation.name.value)}, ua);\n`
         );
-      }      
+      }
     } else {
       this.write(
         `const inputArgs = new ${capitalize(operation.name.value)}Args();\n`

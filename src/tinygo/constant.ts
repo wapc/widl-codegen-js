@@ -26,6 +26,25 @@ export const primitives = new Set([
   "f32",
   "f64",
   "string",
+  "bytes",
+]);
+
+export const codecFuncs = new Map<string, string>([
+  ["ID", "StringToBytes"],
+  ["bool", "BoolToBytes"],
+  ["string", "StringToBytes"],
+  ["datetime", "StringToBytes"],
+  ["i8", "Int8ToBytes"],
+  ["u8", "Uint8ToBytes"],
+  ["i16", "Int16ToBytes"],
+  ["u16", "Uint16ToBytes"],
+  ["i32", "Int32ToBytes"],
+  ["u32", "Uint32ToBytes"],
+  ["i64", "Int64ToBytes"],
+  ["u64", "Uint64ToBytes"],
+  ["f32", "Float32ToBytes"],
+  ["f64", "Float64ToBytes"],
+  ["bytes", "ByteArraToBytesy"],
 ]);
 
 export const decodeFuncs = new Map<string, string>([

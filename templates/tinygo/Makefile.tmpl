@@ -9,7 +9,7 @@ codegen:
 
 build:
 	mkdir -p build
-	tinygo build -o build/{{.name}}.wasm -target wasm -no-debug pkg/main.go
+	tinygo build -o build/{{.name}}.wasm -target wasi -no-debug pkg/main.go
 
 clean:
 	rm -Rf build

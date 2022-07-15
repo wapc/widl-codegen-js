@@ -1,4 +1,4 @@
-import { Context, Writer, BaseVisitor, Optional } from "@wapc/widl/ast";
+import { Context, Writer, BaseVisitor, Optional, Named } from "@wapc/widl/ast";
 import {
   expandType,
   read,
@@ -12,6 +12,7 @@ import {
   defaultValueForType,
 } from "./helpers";
 import { formatComment, shouldIncludeHostCall } from "../utils";
+import { codecFuncs } from "./constant";
 
 export class HostVisitor extends BaseVisitor {
   constructor(writer: Writer) {
@@ -82,10 +83,18 @@ func New${className}(binding string) *${className} {
         )}, ${strQuote(operation.name.value)}, []byte{})\n`
       );
     } else if (operation.isUnary()) {
-      this.write(`inputBytes, err := msgpack.ToBytes(&${
-        operation.unaryOp().name.value
-      })
-      if err != nil {
+      const unaryParam = operation.unaryOp();
+      if (isObject(unaryParam.type)) {
+        this.write(
+          `inputBytes, err := msgpack.ToBytes(&${unaryParam.name.value})\n`
+        );
+      } else {
+        const codecFunc = codecFuncs.get((unaryParam.type as Named).name.value);
+        this.write(
+          `inputBytes, err := msgpack.${codecFunc}(${unaryParam.name.value})\n`
+        );
+      }
+      this.write(`if err != nil {
         return ${defaultValWithComma}err
       }\n`);
       if (!retVoid) {

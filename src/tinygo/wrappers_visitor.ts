@@ -10,6 +10,7 @@ import {
   mapArgs,
   varAccessArg,
   uncapitalize,
+  read,
 } from "./helpers";
 import { shouldIncludeHandler } from "../utils";
 
@@ -75,13 +76,25 @@ export class WrapperFuncsVisitor extends BaseVisitor {
       this.write(`decoder := msgpack.NewDecoder(payload)\n`);
     }
     if (operation.isUnary()) {
-      this.write(`var request ${expandType(
-        operation.unaryOp().type,
-        undefined,
-        false,
-        isReference(operation.annotations)
-      )}
-      request.Decode(&decoder)\n`);
+      const unaryParam = operation.parameters[0];
+      if (isObject(unaryParam.type)) {
+        this.write(`var request ${expandType(
+          operation.unaryOp().type,
+          undefined,
+          false,
+          isReference(operation.annotations)
+        )}
+        if err := request.Decode(&decoder); err != nil {
+          return nil, err
+        }\n`);
+      } else {
+        this.write(
+          `${read(false, "request", true, "", unaryParam.type, false, false)}`
+        );
+        this.write(`if err != nil {
+          return nil, err
+        }\n`);
+      }
       this.write(isVoid(operation.type) ? "err := " : "response, err := ");
       this.write(`${uncapitalize(operation.name.value)}Handler(request)\n`);
     } else {
