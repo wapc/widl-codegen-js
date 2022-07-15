@@ -5,14 +5,14 @@
   "author": "{{.author}}",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "asc assembly/index.ts -b build/{{.name}}.wasm --use abort=assembly/index/abort --optimize"
+    "build": "asc assembly/index.ts -o build/{{.name}}.wasm --use abort=assembly/index/abort --optimize"
   },
   "license": "ISC",
   "dependencies": {
-    "@wapc/as-guest": "^v0.2.1",
+    "@wapc/as-guest": "^v0.3.1",
     "@wapc/as-msgpack": "^0.1.14"
   },
   "devDependencies": {
-    "assemblyscript": "^0.17.1"
+    "assemblyscript": "^0.20.13"
   }
 }

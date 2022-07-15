@@ -16,6 +16,7 @@ export const primitives = new Set([
   "f32",
   "f64",
   "string",
+  "bytes",
 ]);
 
 export const decodeFuncs = new Map<string, string>([

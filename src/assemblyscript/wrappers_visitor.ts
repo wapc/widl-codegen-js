@@ -9,7 +9,7 @@ import {
   isObject,
   mapArgs,
   varAccessArg,
-  isBytes,
+  read,
 } from "./helpers";
 import { shouldIncludeHandler } from "../utils";
 
@@ -26,46 +26,73 @@ export class WrappersVisitor extends BaseVisitor {
     this.write(
       `var ${operation.name.value}Handler: (${mapArgs(
         operation.parameters
-      )}) => ${expandType(
-        operation.type,
-        true,
-        isReference(operation.annotations)
-      )};\n`
+      )}) => `
     );
+    if (isVoid(operation.type)) {
+      this.write(`Error | null;\n`);
+    } else {
+      this.write(
+        `Result<${expandType(
+          operation.type,
+          true,
+          isReference(operation.annotations)
+        )}>;\n`
+      );
+    }
     this
-      .write(`function ${operation.name.value}Wrapper(payload: ArrayBuffer): ArrayBuffer {
+      .write(`function ${operation.name.value}Wrapper(payload: ArrayBuffer): Result<ArrayBuffer> {
       const decoder = new Decoder(payload)\n`);
     if (operation.isUnary()) {
-      this.write(`const request = new ${expandType(
-        operation.unaryOp().type,
-        false,
-        isReference(operation.annotations)
-      )}();
+      const unaryParam = operation.parameters[0];
+      if (isObject(unaryParam.type)) {
+        this.write(`const request = new ${expandType(
+          operation.unaryOp().type,
+          false,
+          isReference(operation.annotations)
+        )}();
       request.decode(decoder);\n`);
-      this.write(isVoid(operation.type) ? "" : "const response = ");
-      this.write(`${operation.name.value}Handler(request);\n`);
+        this.write(isVoid(operation.type) ? "" : "const result = ");
+        this.write(`${operation.name.value}Handler(request);\n`);
+      } else {
+        this.write(`const ${read("val", unaryParam.type, false, false)}`);
+        this.write(isVoid(operation.type) ? "" : "const result = ");
+        this.write(`${operation.name.value}Handler(val);\n`);
+      }
     } else {
-      this.write(`const inputArgs = new ${capitalize(
-        operation.name.value
-      )}Args();
-      inputArgs.decode(decoder);\n`);
-      this.write(isVoid(operation.type) ? "" : "const response = ");
+      if (operation.parameters.length > 0) {
+        this.write(`const inputArgs = new ${capitalize(
+          operation.name.value
+        )}Args();
+        inputArgs.decode(decoder);
+        if (decoder.error()) {
+          return Result.error<ArrayBuffer>(decoder.error()!)
+        }\n`);
+      }
       this.write(
-        `${operation.name.value}Handler(${varAccessArg(
+        `const result = ${operation.name.value}Handler(${varAccessArg(
           "inputArgs",
           operation.parameters
         )});\n`
       );
+      if (isVoid(operation.type)) {
+        this.write(`if (result) {
+            return Result.error<ArrayBuffer>(result);
+          }\n`);
+      } else {
+        this.write(`if (!result.isOk) {
+            return Result.error<ArrayBuffer>(result.error()!);
+          }\n`);
+      }
+    }
+    if (!isVoid(operation.type)) {
+      this.write(`const response = result.get();\n`);
     }
     if (isVoid(operation.type)) {
       this.visitWrapperBeforeReturn(context);
-      this.write(`return new ArrayBuffer(0);\n`);
-    } else if (isBytes(operation.type)) {
-      this.visitWrapperBeforeReturn(context);
-      this.write(`return response;\n`);
+      this.write(`return Result.ok(new ArrayBuffer(0));\n`);
     } else if (isObject(operation.type)) {
       this.visitWrapperBeforeReturn(context);
-      this.write(`return response.toBuffer();\n`);
+      this.write(`return Result.ok(response.toBuffer());\n`);
     } else {
       this.write(`const sizer = new Sizer();\n`);
       this.write(
@@ -79,7 +106,7 @@ export class WrappersVisitor extends BaseVisitor {
         isReference(operation.annotations)
       )};\n`);
       this.visitWrapperBeforeReturn(context);
-      this.write(`return ua;\n`);
+      this.write(`return Result.ok(ua);\n`);
     }
     this.write(`}\n\n`);
   }

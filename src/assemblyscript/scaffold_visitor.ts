@@ -18,6 +18,7 @@ export class ScaffoldVisitor extends BaseVisitor {
     super.visitDocumentBefore(context);
     const typesVisitor = new TypesVisitor(this.writer);
     context.document?.accept(context, typesVisitor);
+    this.write(`import { Result } from "@wapc/as-guest";\n\n`);
   }
 
   visitAllOperationsBefore(context: Context): void {
@@ -31,20 +32,28 @@ export class ScaffoldVisitor extends BaseVisitor {
     }
     const operation = context.operation!;
     this.write(`\n`);
+    const expanded = expandType(
+      operation.type,
+      true,
+      isReference(operation.annotations)
+    );
     this.write(
       `function ${operation.name.value}(${mapArgs(
         operation.parameters
-      )}): ${expandType(
-        operation.type,
-        true,
-        isReference(operation.annotations)
-      )} {\n`
+      )}):`
     );
+    if (isVoid(operation.type)) {
+      this.write(`Error | null\n`);
+    } else {
+      this.write(`Result<${expanded}>`)
+    }
+    this.write(` {\n`);
     if (!isVoid(operation.type)) {
       const dv = defaultValueForType(operation.type);
-      this.write(`  return ${dv};`);
+      this.write(`  return Result.error<${expanded}>(new Error("not implemented"));\n`);
+    } else {
+      this.write(`return null\n`);
     }
-    this.write(`// TODO: Provide implementation.\n`);
     this.write(`}\n`);
   }
 
@@ -130,7 +139,7 @@ class TypesVisitor extends BaseVisitor {
 
     if (this.hasObjects || this.hasOperations) {
       const packageName = context.config.package || "./module";
-      this.write(` } from "${packageName}";\n\n`);
+      this.write(` } from "${packageName}";\n`);
     }
   }
 }

@@ -6,6 +6,7 @@ import {
   mapArgs,
   mapArg,
   capitalize,
+  isVoid,
 } from "./helpers";
 import { formatComment, shouldIncludeHandler } from "../utils";
 
@@ -35,11 +36,17 @@ export class HandlersVisitor extends BaseVisitor {
     } else {
       opVal += mapArgs(operation.parameters);
     }
-    opVal += `) => ${expandType(
-      operation.type,
-      true,
-      isReference(operation.annotations)
-    )}): void {\n`;
+    opVal += `) => `;
+    if (isVoid(operation.type)) {
+      opVal += `Error | null`;
+    } else {
+      opVal += `Result<${expandType(
+        operation.type,
+        true,
+        isReference(operation.annotations)
+      )}>`;
+    }
+    opVal += `): void {\n`;
     opVal += `${operation.name.value}Handler = handler;\n`;
     opVal += `register(${strQuote(operation.name.value)}, ${
       operation.name.value
