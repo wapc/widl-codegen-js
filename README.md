@@ -1,5 +1,11 @@
 # WIDL Code Generation
 
+## Deprecation Notice
+
+**The WIDL project has been extracted out of waPC and can now be found at [github.com/apexlang](https://github.com/apexlang)**
+
+## Description
+
 This library works in tandem with [`wapc/widl-js`](https://github.com/wapc/widl-js) to generate waPC
 module code in Rust, AssemblyScript, and TinyGo.
 
